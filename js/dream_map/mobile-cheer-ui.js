@@ -59,8 +59,13 @@
       .join("");
 
     if (anonCount > 0) {
-      const tail =
-        anonCount === 1 ? "And 1 Other" : "And " + anonCount + " Others";
+      let tail;
+      if (named.length === 0) {
+        tail = anonCount === 1 ? "1 other" : anonCount + " others";
+      } else {
+        tail =
+          anonCount === 1 ? "And 1 other" : "And " + anonCount + " others";
+      }
       items +=
         '<li class="dream-popup-joined-others">' + tail + "</li>";
     }
