@@ -1,0 +1,3 @@
+__pycache__
+# Local API token (create from zeffy_api_key.example.txt on the droplet / your machine)
+zeffy_api_key.txt

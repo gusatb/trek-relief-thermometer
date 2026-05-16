@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trek Relief | Dream With Purpose Map</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+        body, html {
+            margin: 0; padding: 0; height: 100%;
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f4f1ea;
+        }
+        #map { height: 100vh; width: 100%; z-index: 1; }
+
+        /* Branding overlay */
+        .branding-overlay {
+            position: absolute; top: 20px; left: 20px; z-index: 1000;
+            background: #2c3e50; padding: 25px; border-radius: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            max-width: 320px; border-left: 6px solid #27ae60;
+            color: white;
+        }
+        .logo { width: 140px; margin-bottom: 15px; display: block; }
+        .branding-overlay h2 { margin: 0 0 10px; color: #27ae60; font-size: 20px; font-weight: 700; text-transform: uppercase; }
+        .branding-overlay p { margin: 0; color: #ecf0f1; line-height: 1.5; font-size: 14px; }
+
+        /* Form bar */
+        .form-container {
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            z-index: 1000; background: #2c3e50;
+            padding: 12px 20px; border-radius: 8px;
+            display: flex; gap: 12px; align-items: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        input {
+            padding: 12px 15px; border-radius: 4px;
+            border: 1px solid #ccc; font-size: 14px;
+            width: 200px; font-family: inherit;
+        }
+        #userLocation { width: 260px; }
+
+        button {
+            padding: 12px 24px; background: #27ae60;
+            color: white; border: none; border-radius: 4px;
+            cursor: pointer; font-weight: 700;
+            text-transform: uppercase;
+            min-width: 120px; transition: 0.2s ease;
+        }
+        button:hover { background: #2ecc71; }
+        button.success { background: #f39c12; }
+
+        #counter-box {
+            background: rgba(255,255,255,0.1); color: #27ae60;
+            padding: 8px 15px; border-radius: 4px;
+            font-size: 13px; font-weight: 700;
+            border: 1px solid #27ae60;
+        }
+
+        /* Tooltip name styling */
+        .name-label {
+            background: rgba(44, 62, 80, 0.9);
+            border: 1px solid #27ae60;
+            color: white; font-weight: 700; font-size: 10px;
+            padding: 2px 6px; border-radius: 4px;
+            pointer-events: none;
+        }
+
+        /* Pulse marker */
+        .pin-pulse {
+            background-color: #27ae60;
+            width: 14px; height: 14px; border-radius: 50%;
+            border: 2px solid #fff;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .pin-pulse::after {
+            content: '';
+            position: absolute; top: -2px; left: -2px;
+            width: 14px; height: 14px; border-radius: 50%;
+            border: 2px solid #27ae60;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Branding -->
+<div class="branding-overlay">
+    <img src="https://images.squarespace-cdn.com/content/v1/58881284d1758ecbedcb722a/1542248227104-QCKXT05HG3JTQ8R8TQ51/tr-logo-white.png?format=1500w" class="logo">
+    <h2>Dream With Purpose</h2>
+    <p>If you could create a Trek Relief program anywhere in the world, where would it be?</p>
+</div>
+
+<!-- Form -->
+<div class="form-container">
+    <input type="text" id="userName" placeholder="Your Name">
+    <input list="locations" id="userLocation" placeholder="Search destinations...">
+
+    <datalist id="locations">
+
+        <!-- U.S. States -->
+        <option value="Alabama, US">
+        <option value="Alaska, US">
+        <option value="Arizona, US">
+        <option value="Arkansas, US">
+        <option value="California, US">
+        <option value="Colorado, US">
+        <option value="Connecticut, US">
+        <option value="Delaware, US">
+        <option value="Florida, US">
+        <option value="Georgia, US">
+        <option value="Hawaii, US">
+        <option value="Idaho, US">
+        <option value="Illinois, US">
+        <option value="Indiana, US">
+        <option value="Iowa, US">
+        <option value="Kansas, US">
+        <option value="Kentucky, US">
+        <option value="Louisiana, US">
+        <option value="Maine, US">
+        <option value="Maryland, US">
+        <option value="Massachusetts, US">
+        <option value="Michigan, US">
+        <option value="Minnesota, US">
+        <option value="Mississippi, US">
+        <option value="Missouri, US">
+        <option value="Montana, US">
+        <option value="Nebraska, US">
+        <option value="Nevada, US">
+        <option value="New Hampshire, US">
+        <option value="New Jersey, US">
+        <option value="New Mexico, US">
+        <option value="New York, US">
+        <option value="North Carolina, US">
+        <option value="North Dakota, US">
+        <option value="Ohio, US">
+        <option value="Oklahoma, US">
+        <option value="Oregon, US">
+        <option value="Pennsylvania, US">
+        <option value="Rhode Island, US">
+        <option value="South Carolina, US">
+        <option value="South Dakota, US">
+        <option value="Tennessee, US">
+        <option value="Texas, US">
+        <option value="Utah, US">
+        <option value="Vermont, US">
+        <option value="Virginia, US">
+        <option value="Washington, US">
+        <option value="West Virginia, US">
+        <option value="Wisconsin, US">
+        <option value="Wyoming, US">
+    
+        <!-- Countries -->
+        <option value="Afghanistan">
+        <option value="Albania">
+        <option value="Algeria">
+        <option value="Andorra">
+        <option value="Angola">
+        <option value="Antigua and Barbuda">
+        <option value="Argentina">
+        <option value="Armenia">
+        <option value="Australia">
+        <option value="Austria">
+        <option value="Azerbaijan">
+        <option value="Bahamas">
+        <option value="Bahrain">
+        <option value="Bangladesh">
+        <option value="Barbados">
+        <option value="Belarus">
+        <option value="Belgium">
+        <option value="Belize">
+        <option value="Benin">
+        <option value="Bhutan">
+        <option value="Bolivia">
+        <option value="Bosnia and Herzegovina">
+        <option value="Botswana">
+        <option value="Brazil">
+        <option value="Brunei">
+        <option value="Bulgaria">
+        <option value="Burkina Faso">
+        <option value="Burundi">
+        <option value="Cabo Verde">
+        <option value="Cambodia">
+        <option value="Cameroon">
+        <option value="Canada">
+        <option value="Central African Republic">
+        <option value="Chad">
+        <option value="Chile">
+        <option value="China">
+        <option value="Colombia">
+        <option value="Comoros">
+        <option value="Costa Rica">
+        <option value="Croatia">
+        <option value="Cuba">
+        <option value="Cyprus">
+        <option value="Czechia">
+        <option value="Denmark">
+        <option value="Djibouti">
+        <option value="Dominica">
+        <option value="Dominican Republic">
+        <option value="Ecuador">
+        <option value="Egypt">
+        <option value="El Salvador">
+        <option value="Equatorial Guinea">
+        <option value="Eritrea">
+        <option value="Estonia">
+        <option value="Eswatini">
+        <option value="Ethiopia">
+        <option value="Fiji">
+        <option value="Finland">
+        <option value="France">
+        <option value="Gabon">
+        <option value="Gambia">
+        <option value="Georgia">
+        <option value="Germany">
+        <option value="Ghana">
+        <option value="Greece">
+        <option value="Grenada">
+        <option value="Guatemala">
+        <option value="Guinea">
+        <option value="Guinea-Bissau">
+        <option value="Guyana">
+        <option value="Haiti">
+        <option value="Honduras">
+        <option value="Hungary">
+        <option value="Iceland">
+        <option value="India">
+        <option value="Indonesia">
+        <option value="Iran">
+        <option value="Iraq">
+        <option value="Ireland">
+        <option value="Israel">
+        <option value="Italy">
+        <option value="Jamaica">
+        <option value="Japan">
+        <option value="Jordan">
+        <option value="Kazakhstan">
+        <option value="Kenya">
+        <option value="Kiribati">
+        <option value="Kuwait">
+        <option value="Kyrgyzstan">
+        <option value="Laos">
+        <option value="Latvia">
+        <option value="Lebanon">
+        <option value="Lesotho">
+        <option value="Liberia">
+        <option value="Libya">
+        <option value="Liechtenstein">
+        <option value="Lithuania">
+        <option value="Luxembourg">
+        <option value="Madagascar">
+        <option value="Malawi">
+        <option value="Malaysia">
+        <option value="Maldives">
+        <option value="Mali">
+        <option value="Malta">
+        <option value="Marshall Islands">
+        <option value="Mauritania">
+        <option value="Mauritius">
+        <option value="Mexico">
+        <option value="Micronesia">
+        <option value="Moldova">
+        <option value="Monaco">
+        <option value="Mongolia">
+        <option value="Montenegro">
+        <option value="Morocco">
+        <option value="Mozambique">
+        <option value="Myanmar">
+        <option value="Namibia">
+        <option value="Nauru">
+        <option value="Nepal">
+        <option value="Netherlands">
+        <option value="New Zealand">
+        <option value="Nicaragua">
+        <option value="Niger">
+        <option value="Nigeria">
+        <option value="North Korea">
+        <option value="North Macedonia">
+        <option value="Norway">
+        <option value="Oman">
+        <option value="Pakistan">
+        <option value="Palau">
+        <option value="Palestine State">
+        <option value="Panama">
+        <option value="Papua New Guinea">
+        <option value="Paraguay">
+        <option value="Peru">
+        <option value="Philippines">
+        <option value="Poland">
+        <option value="Portugal">
+        <option value="Qatar">
+        <option value="Romania">
+        <option value="Russia">
+        <option value="Rwanda">
+        <option value="Saint Kitts and Nevis">
+        <option value="Saint Lucia">
+        <option value="Saint Vincent and the Grenadines">
+        <option value="Samoa">
+        <option value="San Marino">
+        <option value="Sao Tome and Principe">
+        <option value="Saudi Arabia">
+        <option value="Senegal">
+        <option value="Serbia">
+        <option value="Seychelles">
+        <option value="Sierra Leone">
+        <option value="Singapore">
+        <option value="Slovakia">
+        <option value="Slovenia">
+        <option value="Solomon Islands">
+        <option value="Somalia">
+        <option value="South Africa">
+        <option value="South Korea">
+        <option value="South Sudan">
+        <option value="Spain">
+        <option value="Sri Lanka">
+        <option value="Sudan">
+        <option value="Suriname">
+        <option value="Sweden">
+        <option value="Switzerland">
+        <option value="Syria">
+        <option value="Tajikistan">
+        <option value="Tanzania">
+        <option value="Thailand">
+        <option value="Timor-Leste">
+        <option value="Togo">
+        <option value="Tonga">
+        <option value="Trinidad and Tobago">
+        <option value="Tunisia">
+        <option value="Turkey">
+        <option value="Turkmenistan">
+        <option value="Tuvalu">
+        <option value="Uganda">
+        <option value="Ukraine">
+        <option value="United Arab Emirates">
+        <option value="United Kingdom">
+        <option value="Uruguay">
+        <option value="Uzbekistan">
+        <option value="Vanuatu">
+        <option value="Venezuela">
+        <option value="Vietnam">
+        <option value="Yemen">
+        <option value="Zambia">
+        <option value="Zimbabwe">
+    
+    </datalist>
+
+    <button id="submitBtn" onclick="submitPin()">Submit</button>
+    <div id="counter-box"><span id="pin-count">0</span> DREAMS</div>
+</div>
+
+<div id="map"></div>
+
+<!-- JS Libs -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+/* ---------------------------------------------------
+   SUPABASE
+----------------------------------------------------*/
+const SUPABASE_URL = "https://dxwyqrmorjlmnuuychfn.supabase.co";
+const SUPABASE_KEY = "sb_publishable_8MS3E7SW33zJwTmhXO5YBQ_CTwdxeGC";
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ---------------------------------------------------
+   MAP SETUP
+----------------------------------------------------*/
+const map = L.map("map", {
+    zoomControl: false,
+    minZoom: 3,
+    maxZoom: 12,
+    worldCopyJump: true,
+}).setView([15, 10], 3);
+
+L.control.zoom({ position: "bottomleft" }).addTo(map);
+
+L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png").addTo(map);
+L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png", {
+    pane: "markerPane"
+}).addTo(map);
+
+let pinCount = 0;
+const updateCounter = (n) => document.getElementById("pin-count").innerText = n;
+
+/* ---------------------------------------------------
+   RENDER PIN
+----------------------------------------------------*/
+function renderPin(pin) {
+    const jitterLat = (Math.random() - 0.5) * 0.8;
+    const jitterLng = (Math.random() - 0.5) * 0.8;
+
+    const icon = L.divIcon({
+        className: "custom",
+        html: "<div class='pin-pulse'></div>",
+        iconSize: [14, 14],
+        iconAnchor: [7, 7]
+    });
+
+    const marker = L.marker([pin.latitude + jitterLat, pin.longitude + jitterLng], { icon }).addTo(map);
+
+    marker.bindTooltip(`${pin.name}`, {
+        permanent: true,
+        className: "name-label",
+        direction: "top",
+        offset: [0, -10]
+    });
+
+    marker.bindPopup(`
+        <strong>${pin.name}</strong><br><br>
+        Dreams of:<br>
+        <span style="color:#27ae60;font-weight:bold;">${pin.location_name}</span>
+    `);
+}
+
+/* ---------------------------------------------------
+   SUBMIT PIN
+----------------------------------------------------*/
+async function submitPin() {
+    const name = document.getElementById("userName").value.trim();
+    const loc = document.getElementById("userLocation").value.trim();
+    const btn = document.getElementById("submitBtn");
+
+    if (!name || !loc) return;
+
+    try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(loc)}`);
+        const geo = await res.json();
+        if (!geo.length) return;
+
+        const { lat, lon } = geo[0];
+
+        const { error } = await _supabase.from("map_pins").insert([
+            {
+                name,
+                location_name: loc,
+                latitude: parseFloat(lat),
+                longitude: parseFloat(lon)
+            }
+        ]);
+
+        if (error) throw error;
+
+        document.getElementById("userName").value = "";
+        document.getElementById("userLocation").value = "";
+
+        btn.innerText = "PINNED!";
+        btn.classList.add("success");
+        setTimeout(() => {
+            btn.innerText = "Submit";
+            btn.classList.remove("success");
+        }, 2000);
+
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+/* ---------------------------------------------------
+   LOAD EXISTING PINS
+----------------------------------------------------*/
+async function loadPins() {
+    const { data } = await _supabase.from("map_pins").select("*");
+    if (data) {
+        data.forEach(renderPin);
+        updateCounter(data.length);
+    }
+}
+loadPins();
+
+/* ---------------------------------------------------
+   REALTIME UPDATES
+----------------------------------------------------*/
+_supabase.channel("map_pins_realtime")
+    .on("postgres_changes", { event: "INSERT", table: "map_pins" }, (payload) => {
+        renderPin(payload.new);
+        updateCounter(++pinCount);
+    })
+    .subscribe();
+</script>
+
+</body>
+</html>

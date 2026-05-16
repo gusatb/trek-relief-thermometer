@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Party With Purpose — Trek Relief</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #0a0c09;
+    --surface:  #111410;
+    --surface2: #181c15;
+    --border:   #252a20;
+    --border2:  #303828;
+    --green:    #4a6b2a;
+    --green-md: #5e8835;
+    --green-lt: #7db048;
+    --green-gl: #a8d470;
+    --amber:    #c8820a;
+    --amber-lt: #f0a825;
+    --amber-gl: #ffe08a;
+    --white:    #edeae0;
+    --offwhite: #c8c4b8;
+    --muted:    #7a7568;
+    --dimmer:   #484540;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--white); display: flex; flex-direction: column; }
+
+  /* STARS */
+  .stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .star { position: absolute; border-radius: 50%; background: #fff; animation: twinkle var(--d,3s) ease-in-out infinite var(--delay,0s); }
+  @keyframes twinkle { 0%,100% { opacity: var(--lo,0.1); } 50% { opacity: var(--hi,0.7); } }
+
+  /* MOUNTAINS */
+  .mountains { position: fixed; bottom: 0; left: 0; right: 0; height: 36vh; z-index: 0; pointer-events: none; }
+
+  /* PAGE GRID */
+  .page { position: relative; z-index: 1; display: grid; grid-template-rows: auto 1fr auto; width: 100%; height: 100vh; padding: 2vh 3vw; gap: 1.5vh; }
+
+  /* HEADER */
+  .header { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding-bottom: 1.5vh; border-bottom: 1px solid var(--border); }
+  .logo-area { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+  .logo-mark { width: 46px; height: 46px; border-radius: 50%; border: 1.5px solid var(--green-md); background: var(--surface2); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+  .logo-mark img { width: 100%; height: 100%; object-fit: cover; }
+  .logo-initials { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 18px; color: var(--green-lt); letter-spacing: 0.05em; }
+  .logo-text { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(13px,1.3vw,19px); font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase; color: var(--white); line-height: 1; }
+  .logo-sub { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(9px,0.8vw,11px); font-weight: 400; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+  .header-center { text-align: center; flex: 1; }
+  .eyebrow { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(9px,0.75vw,11px); font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: var(--amber); margin-bottom: 3px; }
+  .main-title { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(1.8rem,4.2vw,5rem); font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; line-height: 0.92; color: var(--white); }
+  .main-title em { font-style: italic; color: var(--green-lt); }
+  .header-right { flex-shrink: 0; text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .live-badge { display: inline-flex; align-items: center; gap: 7px; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--green-lt); border: 1px solid var(--green); border-radius: 2px; padding: 5px 12px; }
+  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green-lt); animation: pulse-dot 1.8s ease-in-out infinite; }
+  @keyframes pulse-dot { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(0.7); } }
+  .status-line { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(10px,0.82vw,12px); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .status-line.error { color: #e05040; }
+
+  /* CONTENT */
+  .content { display: grid; grid-template-columns: 1.4fr auto 1fr; gap: 3vw; align-items: stretch; min-height: 0; }
+
+  /* LEFT IMAGE */
+  .left-img-col { min-height: 0; height: 100%; border-radius: 4px; overflow: hidden; border: 1px solid var(--border2); position: relative; }
+  .left-img-col img { width: 100%; height: 100%; object-fit: cover; object-position: center 15%; display: block; }
+  .left-img-col::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to right, rgba(10,12,9,0.35) 0%, transparent 40%, transparent 60%, rgba(10,12,9,0.35) 100%), linear-gradient(to bottom, rgba(10,12,9,0.3) 0%, transparent 30%, transparent 70%, rgba(10,12,9,0.4) 100%); pointer-events: none; }
+
+  /* THERMOMETER */
+  .thermo-wrap { display: flex; align-items: flex-end; height: 100%; min-height: 0; }
+  .thermo-col { position: relative; width: 80px; flex-shrink: 0; height: 100%; min-height: 280px; max-height: 68vh; }
+  .tube-bg { position: absolute; left: 50%; transform: translateX(-50%); width: 44px; top: 0; bottom: 76px; border-radius: 22px 22px 0 0; background: var(--surface2); border: 1.5px solid var(--border2); overflow: hidden; }
+  .tube-fill { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, var(--green) 0%, var(--green-md) 45%, var(--green-lt) 80%, var(--green-gl) 100%); transition: height 2s cubic-bezier(0.34,1.1,0.64,1); }
+  .tube-fill::after { content: ''; position: absolute; top: 0; left: 7px; width: 6px; bottom: 0; background: rgba(255,255,255,0.11); border-radius: 3px; }
+  .tube-glow { position: absolute; left: 50%; transform: translateX(-50%); width: 64px; height: 22px; background: radial-gradient(ellipse, rgba(122,176,72,0.5) 0%, transparent 70%); transition: bottom 2s cubic-bezier(0.34,1.1,0.64,1); pointer-events: none; }
+  .bulb-wrap { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 76px; height: 76px; }
+  .bulb { width: 76px; height: 76px; border-radius: 50%; background: radial-gradient(circle at 38% 35%, var(--green-md), var(--green)); border: 1.5px solid var(--border2); position: relative; box-shadow: inset 0 -6px 16px rgba(0,0,0,0.6), 0 0 28px rgba(74,107,42,0.4); animation: bulb-pulse 3s ease-in-out infinite; }
+  @keyframes bulb-pulse { 0%,100% { box-shadow: inset 0 -6px 16px rgba(0,0,0,0.6), 0 0 28px rgba(74,107,42,0.4); } 50% { box-shadow: inset 0 -6px 16px rgba(0,0,0,0.6), 0 0 48px rgba(122,176,72,0.6); } }
+  .bulb-shine { position: absolute; top: 12px; left: 16px; width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.22); }
+
+  /* TICKS */
+  .ticks-col { flex: 0 0 130px; width: 130px; padding-left: 18px; height: 100%; min-height: 280px; max-height: 68vh; position: relative; }
+  .tick { position: absolute; left: 0; right: 0; display: flex; align-items: center; gap: 10px; }
+  .tick-dash { width: 12px; height: 1px; background: var(--border2); flex-shrink: 0; }
+  .tick-label { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(11px,0.95vw,14px); font-weight: 600; letter-spacing: 0.08em; color: var(--dimmer); white-space: nowrap; text-transform: uppercase; }
+  .tick.is-goal .tick-dash { background: var(--amber); width: 18px; }
+  .tick.is-goal .tick-label { color: var(--amber-lt); font-weight: 700; }
+  .tick.passed .tick-dash { background: var(--green-md); }
+  .tick.passed .tick-label { color: var(--green-lt); }
+
+  /* MARKER */
+  .marker { position: absolute; left: -5px; display: flex; align-items: center; gap: 9px; transition: bottom 2s cubic-bezier(0.34,1.1,0.64,1); opacity: 0; z-index: 2; }
+  .marker.visible { opacity: 1; }
+  .marker-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--amber-lt); border: 2px solid var(--bg); box-shadow: 0 0 0 1.5px var(--amber-lt), 0 0 8px rgba(240,168,37,0.6); flex-shrink: 0; }
+  .marker-label { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(12px,1vw,15px); font-weight: 800; letter-spacing: 0.06em; color: var(--amber-lt); white-space: nowrap; background: var(--surface); padding: 2px 8px; border-radius: 2px; border: 1px solid rgba(200,130,10,0.4); text-transform: uppercase; }
+
+  /* RIGHT COL */
+  .right-col { display: flex; flex-direction: column; justify-content: center; gap: 2vh; height: 100%; min-height: 0; }
+  .right-col-inner { display: flex; flex-direction: column; gap: 2vh; min-height: 0; max-height: 100%; width: 100%; }
+
+  /* DONOR LIST (below all figures — TV autoscroll) */
+  .donor-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 10px 12px 10px;
+  }
+  .donor-panel-head {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(9px, 0.72vw, 11px);
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .donor-list-viewport {
+    flex: 1 1 auto;
+    min-height: 100px;
+    max-height: clamp(120px, 32vh, 420px);
+    overflow: hidden;
+    position: relative;
+    mask-image: linear-gradient(to bottom, transparent, #000 8px, #000 calc(100% - 8px), transparent);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 8px, #000 calc(100% - 8px), transparent);
+  }
+  .donor-list-tape {
+    will-change: transform;
+  }
+  .donor-list-tape.autoscroll {
+    animation: donor-tape-scroll linear infinite;
+  }
+  @keyframes donor-tape-scroll {
+    from { transform: translateY(0); }
+    to { transform: translateY(-50%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .donor-list-tape.autoscroll { animation: none; }
+    .donor-list-viewport.reduced-fallback {
+      overflow-y: auto;
+      mask-image: none;
+      -webkit-mask-image: none;
+    }
+  }
+  .donor-list-segment { padding: 0 2px 0 0; }
+  .donor-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: clamp(14px, 1.2vw, 19px);
+  }
+  .donor-row:last-child { border-bottom: none; padding-bottom: 2px; }
+  .donor-name {
+    font-family: 'Barlow', sans-serif;
+    font-weight: 500;
+    color: var(--offwhite);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .donor-amt {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--green-lt);
+    flex-shrink: 0;
+  }
+
+  /* HERO AMOUNT */
+  .hero-amount { text-align: center; position: relative; }
+  .hero-label { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(10px,0.85vw,12px); font-weight: 600; letter-spacing: 0.32em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+  .hero-number { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(3.5rem,8.5vw,9.5rem); font-weight: 900; letter-spacing: -0.01em; line-height: 0.88; color: var(--green-gl); text-shadow: 0 0 60px rgba(122,176,72,0.3); transition: text-shadow 0.4s ease; position: relative; display: inline-block; }
+  .hero-number.flash { animation: hero-flash 1.2s ease-out forwards; }
+  @keyframes hero-flash {
+    0%   { text-shadow: 0 0 60px rgba(122,176,72,0.3); transform: scale(1); }
+    15%  { text-shadow: 0 0 120px rgba(168,212,112,1), 0 0 200px rgba(168,212,112,0.5); transform: scale(1.06); }
+    40%  { text-shadow: 0 0 80px rgba(168,212,112,0.8); transform: scale(1.02); }
+    100% { text-shadow: 0 0 60px rgba(122,176,72,0.3); transform: scale(1); }
+  }
+
+  /* DELTA BADGE */
+  .delta-badge {
+    position: absolute;
+    top: -10px; right: -10px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(14px,1.4vw,20px); font-weight: 800;
+    color: var(--amber-gl);
+    text-shadow: 0 0 20px rgba(255,224,138,0.8);
+    pointer-events: none;
+    opacity: 0;
+    animation: delta-float 2.5s ease-out forwards;
+    white-space: nowrap;
+  }
+  @keyframes delta-float {
+    0%   { opacity: 0;   transform: translateY(0px)   scale(0.6); }
+    15%  { opacity: 1;   transform: translateY(-8px)  scale(1.1); }
+    60%  { opacity: 1;   transform: translateY(-36px) scale(1); }
+    100% { opacity: 0;   transform: translateY(-60px) scale(0.9); }
+  }
+
+  /* PROGRESS BAR */
+  .progress-section { display: flex; flex-direction: column; gap: 7px; }
+  .progress-labels { display: flex; justify-content: space-between; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(9px,0.82vw,12px); font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  .progress-labels span:last-child { color: var(--amber); }
+  .progress-track { height: 10px; background: var(--surface2); border-radius: 5px; border: 1px solid var(--border2); overflow: hidden; position: relative; }
+  .progress-fill { height: 100%; border-radius: 5px; position: relative; background: linear-gradient(to right, var(--green), var(--green-lt) 70%, var(--green-gl)); transition: width 2s cubic-bezier(0.34,1.1,0.64,1); }
+  .progress-fill::after { content: ''; position: absolute; top: 1px; left: 0; right: 4px; height: 3px; background: rgba(255,255,255,0.18); border-radius: 3px; }
+  .progress-fill.shimmer::before {
+    content: '';
+    position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.35), transparent);
+    animation: shimmer-sweep 1s ease-out forwards;
+  }
+  @keyframes shimmer-sweep { from { left: -60%; } to { left: 110%; } }
+
+  /* STAT ROW */
+  .stat-row { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 3px; padding: clamp(10px,1.1vh,16px) 12px; text-align: center; position: relative; overflow: hidden; transition: border-color 0.4s; }
+  .stat::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--border2); transition: background 0.5s; }
+  .stat.hi::before { background: linear-gradient(to right, var(--green), var(--green-lt)); }
+  .stat.pulse-green { animation: stat-pulse-green 1s ease-out; }
+  @keyframes stat-pulse-green {
+    0%   { box-shadow: 0 0 0 0 rgba(122,176,72,0); border-color: var(--border); }
+    30%  { box-shadow: 0 0 0 6px rgba(122,176,72,0.35); border-color: var(--green-lt); }
+    100% { box-shadow: 0 0 0 0 rgba(122,176,72,0); border-color: var(--border); }
+  }
+  .stat-label { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(9px,0.72vw,11px); font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  .stat-value { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(1.3rem,2.6vw,3rem); font-weight: 800; letter-spacing: 0.02em; color: var(--white); transition: color 0.3s; }
+  .stat-value.green { color: var(--green-lt); }
+  .stat-value.amber { color: var(--amber-lt); }
+
+  /* FOOTER */
+  .footer { display: flex; align-items: center; justify-content: space-between; padding-top: 1.5vh; border-top: 1px solid var(--border); gap: 1rem; }
+  .spinner { display: inline-block; width: 11px; height: 11px; border: 1.5px solid var(--border2); border-top-color: var(--green-lt); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* RIPPLE OVERLAY */
+  .ripple-overlay {
+    position: fixed; inset: 0; z-index: 98; pointer-events: none;
+    border-radius: 0;
+    background: radial-gradient(ellipse at center, rgba(122,176,72,0.18) 0%, transparent 70%);
+    opacity: 0;
+  }
+  .ripple-overlay.fire { animation: ripple-flash 1.4s ease-out forwards; }
+  @keyframes ripple-flash {
+    0%   { opacity: 0; transform: scale(0.3); }
+    20%  { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.4); }
+  }
+
+  /* MILESTONE OVERLAY */
+  .milestone-overlay { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; pointer-events: none; opacity: 0; transition: opacity 0.5s; background: rgba(10,12,9,0.6); }
+  .milestone-overlay.show { opacity: 1; }
+  .milestone-card { background: var(--surface); border: 1px solid var(--green-md); border-radius: 4px; padding: 3.5rem 6rem; text-align: center; box-shadow: 0 0 100px rgba(74,107,42,0.55), 0 0 240px rgba(74,107,42,0.2); animation: mpop 0.5s cubic-bezier(0.34,1.4,0.64,1) both; }
+  @keyframes mpop { from { transform: scale(0.65); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .milestone-pct { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(5rem,12vw,11rem); font-weight: 900; color: var(--green-gl); line-height: 1; text-shadow: 0 0 80px rgba(122,176,72,0.65); }
+  .milestone-msg { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(1.1rem,2.2vw,2.2rem); font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--white); margin-top: 0.6rem; }
+
+  /* NEW DONOR CELEBRATION */
+  .new-donor-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 108;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    background: radial-gradient(ellipse 85% 70% at 50% 45%, rgba(74,107,42,0.45) 0%, rgba(10,12,9,0.92) 55%, rgba(5,6,4,0.96) 100%);
+  }
+  .new-donor-overlay.show { opacity: 1; }
+  .new-donor-bg-pulse {
+    position: absolute;
+    inset: -20%;
+    background: radial-gradient(circle at 50% 50%, rgba(240,168,37,0.25) 0%, transparent 45%);
+    animation: nd-bg-pulse 1.2s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes nd-bg-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50%      { transform: scale(1.12); opacity: 1; }
+  }
+  .new-donor-ring {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 40vmin;
+    height: 40vmin;
+    margin: -20vmin 0 0 -20vmin;
+    border-radius: 50%;
+    border: 3px solid rgba(240,168,37,0.5);
+    box-shadow:
+      0 0 0 2px rgba(122,176,72,0.35),
+      0 0 80px rgba(240,168,37,0.35),
+      inset 0 0 60px rgba(168,212,72,0.12);
+    animation: nd-ring-out 1.4s ease-out infinite;
+    pointer-events: none;
+  }
+  .new-donor-ring.r2 { animation-delay: 0.45s; width: 55vmin; height: 55vmin; margin: -27.5vmin 0 0 -27.5vmin; opacity: 0.65; }
+  .new-donor-ring.r3 { animation-delay: 0.9s; width: 72vmin; height: 72vmin; margin: -36vmin 0 0 -36vmin; opacity: 0.35; }
+  @keyframes nd-ring-out {
+    0%   { transform: scale(0.4); opacity: 0.95; }
+    100% { transform: scale(1.35); opacity: 0; }
+  }
+  .new-donor-confetti-host {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .new-donor-card-wrap {
+    position: relative;
+    z-index: 3;
+    max-width: min(96vw, 920px);
+    padding: 2rem;
+  }
+  .new-donor-card {
+    text-align: center;
+    padding: clamp(2rem, 5vw, 3.5rem) clamp(1.5rem, 4vw, 3rem);
+    background: linear-gradient(165deg, rgba(24,28,21,0.97) 0%, rgba(10,12,9,0.99) 100%);
+    border: 2px solid rgba(240,168,37,0.55);
+    border-radius: 8px;
+    box-shadow:
+      0 0 0 1px rgba(122,176,72,0.25),
+      0 0 80px rgba(74,107,42,0.5),
+      0 0 160px rgba(240,168,37,0.15);
+    animation: nd-card-pop 0.65s cubic-bezier(0.34, 1.35, 0.64, 1) both;
+  }
+  @keyframes nd-card-pop {
+    from { transform: scale(0.5) translateY(30px); opacity: 0; }
+    to   { transform: scale(1) translateY(0); opacity: 1; }
+  }
+  .new-donor-eyebrow {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(12px, 1.4vw, 16px);
+    font-weight: 800;
+    letter-spacing: 0.38em;
+    text-transform: uppercase;
+    color: var(--amber-lt);
+    margin-bottom: 0.75rem;
+    animation: nd-shimmer-text 2s ease-in-out infinite;
+  }
+  @keyframes nd-shimmer-text {
+    0%, 100% { opacity: 1; filter: brightness(1); }
+    50%      { opacity: 0.85; filter: brightness(1.2); }
+  }
+  .new-donor-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(2.2rem, 7vw, 5.5rem);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--white);
+    text-shadow: 0 0 40px rgba(237,234,224,0.35);
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+  }
+  .new-donor-amount {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(2.5rem, 8vw, 6.5rem);
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    color: var(--green-gl);
+    margin-top: 0.35rem;
+    text-shadow:
+      0 0 50px rgba(168,212,112,0.9),
+      0 0 100px rgba(122,176,72,0.45);
+    animation: nd-amount-glow 1.1s ease-in-out infinite alternate;
+  }
+  @keyframes nd-amount-glow {
+    from { transform: scale(1); }
+    to   { transform: scale(1.03); }
+  }
+  .new-donor-thanks {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(1rem, 2.2vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 1.25rem;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .new-donor-bg-pulse,
+    .new-donor-ring { animation: none !important; opacity: 0.5; }
+    .new-donor-eyebrow { animation: none; }
+    .new-donor-amount { animation: none; }
+    .new-donor-card { animation: none; opacity: 1; transform: none; }
+  }
+
+  /* DEV: test new-donor animation */
+  .dev-test-donor-btn {
+    position: fixed;
+    bottom: 14px;
+    left: 14px;
+    z-index: 220;
+    cursor: pointer;
+    pointer-events: auto;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--offwhite);
+    background: rgba(17,20,16,0.85);
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    padding: 8px 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  .dev-test-donor-btn:hover {
+    border-color: var(--green-md);
+    color: var(--green-lt);
+  }
+
+  /* CONFETTI */
+  .confetti-wrap { position: fixed; inset: 0; z-index: 99; pointer-events: none; overflow: hidden; }
+  .confetti-p { position: absolute; top: -20px; border-radius: 1px; animation: fall linear forwards; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
+
+  /* GOAL REACHED PERSISTENT BANNER */
+  .goal-banner {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    transform: translateY(-100%);
+    transition: transform 0.8s cubic-bezier(0.34,1.3,0.64,1);
+    pointer-events: none;
+  }
+  .goal-banner.show { transform: translateY(0); }
+  .goal-banner-inner {
+    background: linear-gradient(135deg, #c8820a, #f0a825, #ffe08a, #f0a825, #c8820a);
+    background-size: 300% 100%;
+    animation: banner-shimmer 3s linear infinite;
+    padding: 12px 2rem;
+    text-align: center;
+    box-shadow: 0 4px 40px rgba(240,168,37,0.6);
+  }
+  @keyframes banner-shimmer { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
+  .goal-banner-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(1.2rem, 2.5vw, 2rem); font-weight: 900;
+    letter-spacing: 0.25em; text-transform: uppercase;
+    color: #0a0c09; line-height: 1;
+  }
+  .goal-banner-sub {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(0.75rem, 1.2vw, 1rem); font-weight: 600;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(10,12,9,0.7); margin-top: 2px;
+  }
+
+  /* EPIC OVERLAY */
+  .epic-overlay {
+    position: fixed; inset: 0; z-index: 150;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(5,8,4,0.88);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.6s;
+  }
+  .epic-overlay.show { opacity: 1; pointer-events: none; }
+
+  /* SUNRAYS */
+  .epic-rays {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .epic-ray {
+    position: absolute;
+    width: 2px; height: 55vh;
+    background: linear-gradient(to top, transparent, rgba(240,168,37,0.25), transparent);
+    transform-origin: bottom center;
+    top: 50%; left: 50%;
+    margin-left: -1px;
+    animation: ray-spin 12s linear infinite;
+  }
+  @keyframes ray-spin { from { transform: rotate(var(--start)); } to { transform: rotate(calc(var(--start) + 360deg)); } }
+
+  .epic-card {
+    position: relative; z-index: 2;
+    text-align: center;
+    padding: 4rem 6rem;
+    background: radial-gradient(ellipse at center, rgba(25,35,15,0.95), rgba(10,12,9,0.98));
+    border: 1px solid var(--amber);
+    border-radius: 6px;
+    box-shadow:
+      0 0 0 1px rgba(240,168,37,0.2),
+      0 0 80px rgba(240,168,37,0.35),
+      0 0 200px rgba(240,168,37,0.15);
+    animation: epic-card-breathe 2.5s ease-in-out infinite;
+  }
+  @keyframes epic-card-breathe {
+    0%,100% { box-shadow: 0 0 0 1px rgba(240,168,37,0.2), 0 0 80px rgba(240,168,37,0.35), 0 0 200px rgba(240,168,37,0.15); }
+    50%      { box-shadow: 0 0 0 1px rgba(240,168,37,0.4), 0 0 120px rgba(240,168,37,0.55), 0 0 300px rgba(240,168,37,0.25); }
+  }
+
+  .epic-emoji {
+    font-size: clamp(3rem, 6vw, 5.5rem); line-height: 1;
+    margin-bottom: 0.5rem;
+    animation: epic-emoji-bounce 1s ease-in-out infinite alternate;
+  }
+  @keyframes epic-emoji-bounce { from { transform: scale(1); } to { transform: scale(1.15); } }
+
+  .epic-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(4rem, 10vw, 11rem); font-weight: 900;
+    line-height: 0.85; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--amber-gl);
+    text-shadow: 0 0 60px rgba(255,224,138,0.7), 0 0 120px rgba(240,168,37,0.4);
+    animation: epic-title-pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes epic-title-pulse {
+    0%,100% { text-shadow: 0 0 60px rgba(255,224,138,0.7), 0 0 120px rgba(240,168,37,0.4); }
+    50%      { text-shadow: 0 0 100px rgba(255,224,138,1),   0 0 200px rgba(240,168,37,0.7); }
+  }
+
+  .epic-amount {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(2rem, 5vw, 6rem); font-weight: 900;
+    color: var(--green-gl); letter-spacing: 0.06em; margin-top: 0.5rem;
+    text-shadow: 0 0 40px rgba(168,212,112,0.8);
+  }
+
+  .epic-msg {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(1rem, 2vw, 2rem); font-weight: 700;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--white); margin-top: 1.2rem;
+  }
+
+  .epic-sub {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(0.8rem, 1.2vw, 1.1rem); font-weight: 400;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted); margin-top: 0.4rem;
+  }
+
+  /* GOAL-REACHED page-wide gold tint on thermometer */
+  .tube-fill.goal-reached {
+    background: linear-gradient(to top, #c8820a 0%, #f0a825 50%, #ffe08a 85%, #fff8cc 100%) !important;
+    animation: tube-gold-pulse 2s ease-in-out infinite;
+  }
+  @keyframes tube-gold-pulse {
+    0%,100% { filter: brightness(1); }
+    50%      { filter: brightness(1.3) drop-shadow(0 0 12px rgba(255,224,138,0.8)); }
+  }
+
+  .bulb.goal-reached {
+    background: radial-gradient(circle at 38% 35%, #f0a825, #c8820a) !important;
+    animation: bulb-gold-pulse 2s ease-in-out infinite !important;
+  }
+  @keyframes bulb-gold-pulse {
+    0%,100% { box-shadow: inset 0 -6px 16px rgba(0,0,0,0.6), 0 0 40px rgba(240,168,37,0.6); }
+    50%      { box-shadow: inset 0 -6px 16px rgba(0,0,0,0.6), 0 0 80px rgba(255,224,138,0.9); }
+  }
+
+  .dollar-particle {
+    position: fixed;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    color: var(--green-gl);
+    pointer-events: none;
+    z-index: 97;
+    text-shadow: 0 0 12px rgba(168,212,112,0.8);
+    animation: dollar-rise linear forwards;
+  }
+  @keyframes dollar-rise {
+    0%   { opacity: 0;   transform: translateY(0)     scale(0.5) rotate(var(--rot)); }
+    15%  { opacity: 1;   transform: translateY(-20px) scale(1)   rotate(var(--rot)); }
+    80%  { opacity: 0.8; transform: translateY(var(--rise)) scale(1) rotate(var(--rot2)); }
+    100% { opacity: 0;   transform: translateY(var(--rise2)) scale(0.8) rotate(var(--rot2)); }
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<svg class="mountains" viewBox="0 0 1440 300" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="mg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e2a14"/>
+      <stop offset="100%" stop-color="#0a0c09"/>
+    </linearGradient>
+  </defs>
+  <path d="M0 300 L0 210 C60 210 80 155 120 145 C160 135 175 175 220 170 C265 165 275 110 330 95 C385 80 400 155 450 150 C500 145 510 70 570 58 C630 46 645 130 700 125 C755 120 760 55 820 48 C880 41 890 118 950 115 C1010 112 1015 65 1075 60 C1135 55 1145 130 1200 128 C1255 126 1265 80 1320 82 C1375 84 1400 148 1440 145 L1440 300 Z" fill="url(#mg)" opacity="0.6"/>
+  <path d="M570 58 C565 66 560 74 554 80 C562 78 572 76 580 74 C576 68 573 63 570 58Z" fill="#d8e8cc" opacity="0.3"/>
+  <path d="M820 48 C815 57 810 66 804 73 C813 71 823 69 831 67 C827 60 823 54 820 48Z" fill="#d8e8cc" opacity="0.3"/>
+  <path d="M1075 60 C1070 68 1065 77 1059 84 C1068 82 1078 80 1086 78 C1082 71 1078 65 1075 60Z" fill="#d8e8cc" opacity="0.28"/>
+  <path d="M0 300 L0 255 C50 255 70 230 110 222 C150 214 165 240 210 236 C255 232 265 195 315 185 C365 175 378 218 425 214 C472 210 480 172 535 164 C590 156 600 200 655 196 C710 192 718 158 775 150 C832 142 840 185 895 182 C950 179 958 148 1015 144 C1072 140 1082 175 1138 173 C1194 171 1202 145 1258 143 C1314 141 1360 168 1440 165 L1440 300 Z" fill="#111410" opacity="0.9"/>
+  <path d="M0 300 L0 278 C80 278 120 268 180 264 C240 260 280 272 360 268 C440 264 480 252 560 250 C640 248 680 262 760 258 C840 254 880 244 960 242 C1040 240 1080 254 1160 252 C1240 250 1290 260 1440 258 L1440 300 Z" fill="#0d100c" opacity="1"/>
+</svg>
+
+<div class="ripple-overlay" id="ripple-overlay"></div>
+<div class="confetti-wrap" id="confetti-wrap"></div>
+
+<!-- GOAL REACHED PERSISTENT BANNER -->
+<div class="goal-banner" id="goal-banner">
+  <div class="goal-banner-inner">
+    <div class="goal-banner-text">🏔 GOAL REACHED 🏔</div>
+    <div class="goal-banner-sub"><span id="goal-banner-raised">$10,000</span> Raised · Thank You Trek Relief Family!</div>
+  </div>
+</div>
+
+<!-- EPIC GOAL CELEBRATION OVERLAY -->
+<div class="epic-overlay" id="epic-overlay">
+  <div class="epic-rays" id="epic-rays"></div>
+  <div class="epic-card">
+    <div class="epic-emoji">🎉</div>
+    <div class="epic-title">GOAL<br>ACHIEVED!</div>
+    <div class="epic-amount" id="epic-amount">$10,000</div>
+    <div class="epic-msg">10 Years · 10x Impact · Thank You!</div>
+    <div class="epic-sub">Trek Relief Family, you did it!</div>
+  </div>
+</div>
+
+<!-- MILESTONE OVERLAY -->
+<div class="milestone-overlay" id="milestone-overlay">
+  <div class="milestone-card">
+    <div class="milestone-pct" id="milestone-pct">50%</div>
+    <div class="milestone-msg" id="milestone-msg">Halfway there!</div>
+  </div>
+</div>
+
+<!-- NEW DONOR CELEBRATION -->
+<div class="new-donor-overlay" id="new-donor-overlay" aria-hidden="true">
+  <div class="new-donor-bg-pulse" aria-hidden="true"></div>
+  <div class="new-donor-ring" aria-hidden="true"></div>
+  <div class="new-donor-ring r2" aria-hidden="true"></div>
+  <div class="new-donor-ring r3" aria-hidden="true"></div>
+  <div class="new-donor-confetti-host" id="new-donor-confetti-host"></div>
+  <div class="new-donor-card-wrap">
+    <div class="new-donor-card">
+      <div class="new-donor-eyebrow">New donation</div>
+      <div class="new-donor-name" id="new-donor-name"></div>
+      <div class="new-donor-amount" id="new-donor-amount"></div>
+      <div class="new-donor-thanks">Thank you!</div>
+    </div>
+  </div>
+</div>
+
+
+<div class="page">
+
+  <header class="header">
+    <div class="logo-area">
+      <div class="logo-mark">
+        <img src="https://images.squarespace-cdn.com/content/v1/5f0e8e5e2e58e36a9b8e8e5e/trek-relief-logo.png"
+             alt="Trek Relief"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+        <span class="logo-initials" style="display:none">TR</span>
+      </div>
+      <div>
+        <div class="logo-text">Trek Relief</div>
+        <div class="logo-sub">501(c)(3) Nonprofit</div>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <p class="eyebrow">10th Anniversary &nbsp;·&nbsp; 2026</p>
+      <h1 class="main-title">$10k to 10x <em>the next 10 years</em></h1>
+    </div>
+
+    <div class="header-right">
+      <div class="live-badge"><span class="live-dot"></span>Live</div>
+      <div id="status-line" class="status-line">
+        <span class="spinner"></span><span>Loading...</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <div class="left-img-col">
+      <img src="https://res.cloudinary.com/hxn9dbuhd/image/upload/f_auto,c_limit,w_1200,q_auto/v1770068362/organizations/2/9/0/6/29068ed2-f3a0-4cc3-805c-0379c432b91c/178dad5b-0657-46e3-8250-662e2d5fa762.png"
+           alt="Party With Purpose event"/>
+    </div>
+
+    <div class="thermo-wrap">
+      <div class="thermo-col" id="thermo-col">
+        <div class="tube-bg">
+          <div class="tube-fill" id="tube-fill" style="height:0%"></div>
+        </div>
+        <div class="tube-glow" id="tube-glow" style="bottom:76px"></div>
+        <div class="bulb-wrap"><div class="bulb"><div class="bulb-shine"></div></div></div>
+      </div>
+      <div class="ticks-col" id="ticks-col">
+        <div class="marker" id="marker">
+          <div class="marker-dot"></div>
+          <div class="marker-label" id="marker-label">$0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="right-col">
+      <div class="right-col-inner">
+      <div class="hero-amount">
+        <div class="hero-label">Total Raised</div>
+        <div class="hero-number" id="hero-number">$—</div>
+      </div>
+
+      <div class="progress-section">
+        <div class="progress-labels">
+          <span>$0</span>
+          <span id="prog-label">0% of goal</span>
+          <span>$10,000 goal</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat hi" id="stat-raised">
+          <div class="stat-label">Raised</div>
+          <div class="stat-value green" id="s-raised">—</div>
+        </div>
+        <div class="stat" id="stat-remain">
+          <div class="stat-label" id="s-remain-label">Remaining</div>
+          <div class="stat-value amber" id="s-remain">$10,000</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Goal</div>
+          <div class="stat-value">$10,000</div>
+        </div>
+      </div>
+
+      <div class="donor-panel" id="donor-panel">
+        <div class="donor-panel-head">Supporters</div>
+        <div class="donor-list-viewport" id="donor-list-viewport" role="region" aria-label="Scrolling supporter list">
+          <div class="donor-list-tape" id="donor-list-tape">
+            <div class="donor-list-segment" id="donor-list-inner" role="list"></div>
+            <div class="donor-list-segment" id="donor-list-clone" aria-hidden="true"></div>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="footer">
+    <!-- Removed polling button and countdown timer -->
+  </footer>
+
+</div>
+
+<script>
+const GOAL = 10000;
+const MILESTONE_MSGS = {25:'Keep it going!', 50:'Halfway there!', 75:'Almost there!', 100:'Goal reached!'};
+
+let triggered  = new Set();
+let lastRaised = -1;
+let tubePx     = 300;
+
+window.donorList = [];
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function formatDonorCurrency(d) {
+  const c = (d.currency || 'usd').toLowerCase();
+  if (c === 'usd') return '$' + Number(d.amount).toLocaleString();
+  return (d.currency || '').toUpperCase() + ' ' + Number(d.amount).toLocaleString();
+}
+
+function formatCelebrationAmount(d) {
+  const c = (d.currency || 'usd').toLowerCase();
+  if (c === 'usd') {
+    return Number(d.amount).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+  }
+  return String(d.currency || '').toUpperCase() + ' ' + Number(d.amount).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+function donorFingerprint(d) {
+  const name = ((d.name || '') + '').trim().toLowerCase();
+  return name + '|' + Number(d.amount) + '|' + String(d.currency || 'usd').toLowerCase();
+}
+
+let donorKeyBaseline = null;
+const NEW_DONOR_CELEBRATION_MS = 5200;
+let newDonorHideTimer = null;
+let newDonorQueue = [];
+let newDonorPlaying = false;
+
+function enqueueNewDonorCelebration(donor) {
+  newDonorQueue.push(donor);
+  pumpNewDonorQueue();
+}
+
+function pumpNewDonorQueue() {
+  if (newDonorPlaying || newDonorQueue.length === 0) return;
+  newDonorPlaying = true;
+  const donor = newDonorQueue.shift();
+  playNewDonorCelebration(donor, () => {
+    newDonorPlaying = false;
+    pumpNewDonorQueue();
+  });
+}
+
+function playNewDonorCelebration(donor, onDone) {
+  const ov = document.getElementById('new-donor-overlay');
+  const nameEl = document.getElementById('new-donor-name');
+  const amtEl = document.getElementById('new-donor-amount');
+  const host = document.getElementById('new-donor-confetti-host');
+  if (!ov || !nameEl || !amtEl) {
+    if (onDone) onDone();
+    return;
+  }
+
+  clearTimeout(newDonorHideTimer);
+  const nm = ((donor.name || '') + '').trim() || 'Anonymous';
+  nameEl.textContent = nm;
+  amtEl.textContent = formatCelebrationAmount(donor);
+
+  ov.setAttribute('aria-hidden', 'false');
+  ov.classList.remove('show');
+  void ov.offsetWidth;
+  ov.classList.add('show');
+
+  const ripple = document.getElementById('ripple-overlay');
+  if (ripple) {
+    ripple.classList.remove('fire');
+    void ripple.offsetWidth;
+    ripple.classList.add('fire');
+  }
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const celebrationMs = reduceMotion ? 2800 : NEW_DONOR_CELEBRATION_MS;
+  const confettiN = reduceMotion ? 48 : 150;
+
+  if (host) {
+    host.innerHTML = '';
+    spawnConfetti(confettiN, host);
+  } else {
+    spawnConfetti(confettiN);
+  }
+
+  if (!reduceMotion) {
+    for (let i = 0; i < 18; i++) setTimeout(() => spawnDollarParticle(), i * 95);
+  }
+
+  newDonorHideTimer = setTimeout(() => {
+    ov.classList.remove('show');
+    ov.setAttribute('aria-hidden', 'true');
+    if (host) host.innerHTML = '';
+    if (onDone) onDone();
+  }, celebrationMs);
+}
+
+function renderDonorList(donors) {
+  const inner = document.getElementById('donor-list-inner');
+  if (!inner) return;
+  inner.innerHTML = '';
+  if (!donors.length) {
+    const empty = document.createElement('div');
+    empty.className = 'donor-row';
+    empty.innerHTML = '<span class="donor-name" style="color:var(--muted)">No donations yet</span>';
+    inner.appendChild(empty);
+    refreshDonorMarquee();
+    return;
+  }
+  donors.forEach((d) => {
+    const row = document.createElement('div');
+    row.className = 'donor-row';
+    row.setAttribute('role', 'listitem');
+    const name = ((d.name || '') + '').trim() || 'Anonymous';
+    row.innerHTML =
+      '<span class="donor-name" title="' + escapeHtml(name) + '">' + escapeHtml(name) + '</span>' +
+      '<span class="donor-amt">' + escapeHtml(formatDonorCurrency(d)) + '</span>';
+    inner.appendChild(row);
+  });
+  refreshDonorMarquee();
+}
+
+let donorMarqueeRaf = null;
+function refreshDonorMarquee() {
+  const viewport = document.getElementById('donor-list-viewport');
+  const tape = document.getElementById('donor-list-tape');
+  const segA = document.getElementById('donor-list-inner');
+  const segB = document.getElementById('donor-list-clone');
+  if (!viewport || !tape || !segA || !segB) return;
+
+  cancelAnimationFrame(donorMarqueeRaf);
+  donorMarqueeRaf = requestAnimationFrame(() => {
+    donorMarqueeRaf = requestAnimationFrame(() => {
+      donorMarqueeRaf = null;
+      tape.classList.remove('autoscroll');
+      tape.style.animationDuration = '';
+      segB.innerHTML = '';
+      void tape.offsetWidth;
+
+      const vh = viewport.clientHeight;
+      const sh = segA.offsetHeight;
+      const list = window.donorList;
+      if (!list || !list.length || sh < 8) {
+        viewport.classList.remove('reduced-fallback');
+        return;
+      }
+      if (sh <= vh + 2) {
+        viewport.classList.remove('reduced-fallback');
+        return;
+      }
+
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        viewport.classList.add('reduced-fallback');
+        return;
+      }
+      viewport.classList.remove('reduced-fallback');
+
+      segB.innerHTML = segA.innerHTML;
+      void tape.offsetWidth;
+      const pxPerSec = 40;
+      const duration = Math.max(20, sh / pxPerSec);
+      tape.style.animationDuration = duration + 's';
+      tape.classList.add('autoscroll');
+    });
+  });
+}
+
+/* ── STARS ── */
+function buildStars() {
+  const wrap = document.getElementById('stars');
+  for (let i = 0; i < 130; i++) {
+    const s  = document.createElement('div');
+    s.className = 'star';
+    const sz = Math.random() * 2.2 + 0.4;
+    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*62}%;width:${sz}px;height:${sz}px;--d:${(Math.random()*4+2).toFixed(1)}s;--delay:-${(Math.random()*6).toFixed(1)}s;--lo:${(Math.random()*0.12+0.04).toFixed(2)};--hi:${(Math.random()*0.55+0.25).toFixed(2)}`;
+    wrap.appendChild(s);
+  }
+}
+
+/* ── TICKS ── */
+function calcTubePx() {
+  const tube = document.querySelector('.tube-bg');
+  if (tube) return tube.offsetHeight;
+  const col = document.getElementById('thermo-col');
+  return col ? col.offsetHeight - 76 : 300;
+}
+
+function buildTicks() {
+  const col = document.getElementById('ticks-col');
+  col.querySelectorAll('.tick').forEach(t => t.remove());
+  tubePx = calcTubePx();
+
+  const thermo = document.getElementById('thermo-col');
+  if (thermo) col.style.height = thermo.offsetHeight + 'px';
+
+  [0, 2500, 5000, 7500, 10000].forEach(v => {
+    const el = document.createElement('div');
+    el.className = 'tick' + (v === GOAL ? ' is-goal' : '');
+    el.id = 'tick-' + v;
+    el.style.bottom = (76 + (v / GOAL * tubePx)) + 'px';
+    el.innerHTML = '<div class="tick-dash"></div><span class="tick-label">'
+      + (v === 0 ? '$0' : '$' + (v/1000) + 'k')
+      + (v === GOAL ? ' — goal' : '') + '</span>';
+    col.appendChild(el);
+  });
+}
+
+/* ── INCREASE ANIMATIONS ── */
+function fireIncreaseAnimations(oldVal, newVal) {
+  const delta = newVal - oldVal;
+  if (delta <= 0) return;
+
+  const ripple = document.getElementById('ripple-overlay');
+  ripple.classList.remove('fire');
+  void ripple.offsetWidth; 
+  ripple.classList.add('fire');
+  setTimeout(() => ripple.classList.remove('fire'), 1500);
+
+  const hero = document.getElementById('hero-number');
+  hero.classList.remove('flash');
+  void hero.offsetWidth;
+  hero.classList.add('flash');
+  setTimeout(() => hero.classList.remove('flash'), 1300);
+
+  const badge = document.createElement('div');
+  badge.className = 'delta-badge';
+  badge.textContent = '+$' + delta.toLocaleString();
+  hero.parentElement.appendChild(badge);
+  setTimeout(() => badge.remove(), 2600);
+
+  const fill = document.getElementById('progress-fill');
+  fill.classList.remove('shimmer');
+  void fill.offsetWidth;
+  fill.classList.add('shimmer');
+  setTimeout(() => fill.classList.remove('shimmer'), 1100);
+
+  ['stat-raised', 'stat-remain'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('pulse-green');
+    void el.offsetWidth;
+    el.classList.add('pulse-green');
+    setTimeout(() => el.classList.remove('pulse-green'), 1100);
+  });
+
+  const count = Math.min(8, Math.max(3, Math.floor(delta / 50)));
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => spawnDollarParticle(), i * 120);
+  }
+
+  spawnConfetti(28);
+}
+
+/* ── CONFETTI ── */
+function spawnConfetti(n, parentEl) {
+  const wrap = parentEl || document.getElementById('confetti-wrap');
+  if (!wrap) return;
+  const cols = ['#7db048','#a8d470','#f0a825','#ffe08a','#fff','#4a6b2a','#c8820a','#edeae0'];
+  for (let i = 0; i < n; i++) {
+    const p   = document.createElement('div');
+    p.className = 'confetti-p';
+    const dur = (Math.random() * 2 + 1.5).toFixed(2);
+    p.style.cssText = `left:${Math.random()*100}%;background:${cols[Math.floor(Math.random()*cols.length)]};width:${Math.random()*8+4}px;height:${Math.random()*8+4}px;border-radius:${Math.random()>0.5?'50%':'2px'};animation-duration:${dur}s;animation-delay:${(Math.random()*0.9).toFixed(2)}s`;
+    wrap.appendChild(p);
+    setTimeout(() => p.remove(), (parseFloat(dur)+1.2)*1000);
+  }
+}
+
+function updateDisplay(raised) {
+  tubePx = calcTubePx();
+  const pct     = raised / GOAL;
+  const pctInt  = Math.round(pct * 100);
+  const pctFill = Math.min(pct, 1);
+  const goalHit = raised >= GOAL;
+
+  document.getElementById('tube-fill').style.height = (pctFill * 100) + '%';
+  const glowBot = 76 + pctFill * tubePx - 11;
+  document.getElementById('tube-glow').style.bottom = Math.max(76, glowBot) + 'px';
+
+  document.getElementById('hero-number').textContent = '$' + raised.toLocaleString();
+
+  document.getElementById('progress-fill').style.width = (pctFill * 100) + '%';
+  document.getElementById('prog-label').textContent = goalHit
+    ? pctInt + '% · Goal Exceeded! 🎉'
+    : pctInt + '% of goal';
+
+  document.getElementById('s-raised').textContent = '$' + raised.toLocaleString();
+
+  const remainEl      = document.getElementById('s-remain');
+  const remainLabelEl = document.getElementById('s-remain-label');
+  if (goalHit) {
+    const over = raised - GOAL;
+    if (remainLabelEl) remainLabelEl.textContent = 'Exceeded By';
+    if (remainEl) remainEl.textContent = '+$' + over.toLocaleString();
+  } else {
+    if (remainLabelEl) remainLabelEl.textContent = 'Remaining';
+    if (remainEl) remainEl.textContent = '$' + (GOAL - raised).toLocaleString();
+  }
+
+  const marker = document.getElementById('marker');
+  document.getElementById('marker-label').textContent = '$' + raised.toLocaleString();
+  marker.style.bottom = (76 + Math.min(pctFill, 0.964) * tubePx) + 'px';
+  marker.classList.add('visible');
+
+  [0, 2500, 5000, 7500].forEach(v => {
+    const t = document.getElementById('tick-' + v);
+    if (t) t.classList.toggle('passed', raised >= v);
+  });
+
+  const crossingGoal = lastRaised >= 0 && lastRaised < GOAL && raised >= GOAL;
+
+  if (lastRaised >= 0 && raised > lastRaised && !crossingGoal) {
+    fireIncreaseAnimations(lastRaised, raised);
+  }
+
+  [25, 50, 75, 100].forEach(m => {
+    if (pctInt >= m && !triggered.has(m) && lastRaised >= 0) {
+      triggered.add(m);
+      showMilestone(m, raised);
+    }
+  });
+
+  if (goalHit) {
+    const bannerRaised = document.getElementById('goal-banner-raised');
+    if (bannerRaised) bannerRaised.textContent = '$' + raised.toLocaleString();
+  }
+
+  lastRaised = raised;
+}
+
+/* ── MILESTONE ── */
+function showMilestone(pct, raisedAmt) {
+  if (pct === 100) { fireEpicGoal(raisedAmt); return; }
+  const ov = document.getElementById('milestone-overlay');
+  document.getElementById('milestone-pct').textContent = pct + '%';
+  document.getElementById('milestone-msg').textContent = MILESTONE_MSGS[pct] || 'Amazing!';
+  ov.classList.add('show');
+  spawnConfetti(80);
+  setTimeout(() => ov.classList.remove('show'), 3800);
+}
+
+/* ── EPIC GOAL CELEBRATION ── */
+let epicConfettiLoop = null;
+let epicRippleLoop   = null;
+let epicLoopTimer    = null;
+
+function buildEpicRays() {
+  const wrap = document.getElementById('epic-rays');
+  wrap.innerHTML = '';
+  for (let i = 0; i < 24; i++) {
+    const ray = document.createElement('div');
+    ray.className = 'epic-ray';
+    ray.style.cssText = `--start:${(360/24)*i}deg; height:${50+Math.random()*20}vh; opacity:${0.4+Math.random()*0.6}`;
+    wrap.appendChild(ray);
+  }
+}
+
+function showEpicOverlay(raisedAmt) {
+  buildEpicRays();
+  const epic = document.getElementById('epic-overlay');
+  document.getElementById('epic-amount').textContent = '$' + raisedAmt.toLocaleString();
+  epic.classList.add('show');
+  return epic;
+}
+
+function fireEpicGoal(raisedAmt) {
+  document.querySelector('.tube-fill').classList.add('goal-reached');
+  document.querySelector('.bulb').classList.add('goal-reached');
+
+  const bannerRaised = document.getElementById('goal-banner-raised');
+  if (bannerRaised) bannerRaised.textContent = '$' + raisedAmt.toLocaleString();
+  document.getElementById('goal-banner').classList.add('show');
+
+  const epic = showEpicOverlay(raisedAmt);
+  spawnConfetti(250);
+
+  let rippleCount = 0;
+  clearInterval(epicRippleLoop);
+  epicRippleLoop = setInterval(() => {
+    const ripple = document.getElementById('ripple-overlay');
+    ripple.classList.remove('fire');
+    void ripple.offsetWidth;
+    ripple.classList.add('fire');
+    if (++rippleCount > 6) clearInterval(epicRippleLoop);
+  }, 800);
+
+  clearInterval(epicConfettiLoop);
+  epicConfettiLoop = setInterval(() => spawnConfetti(60), 3000);
+
+  for (let i = 0; i < 20; i++) setTimeout(() => spawnDollarParticle(), i * 180);
+
+  setTimeout(() => {
+    epic.classList.remove('show');
+    clearInterval(epicLoopTimer);
+    epicLoopTimer = setInterval(() => {
+      showEpicOverlay(lastRaised);
+      spawnConfetti(120);
+      for (let i = 0; i < 10; i++) setTimeout(() => spawnDollarParticle(), i * 150);
+      setTimeout(() => epic.classList.remove('show'), 6000);
+    }, 45000);
+  }, 8000);
+}
+
+function spawnDollarParticle() {
+  const p   = document.createElement('div');
+  p.className = 'dollar-particle';
+  const x   = 10 + Math.random() * 80;
+  const sz  = Math.random() * 32 + 20;
+  const dur = (Math.random() * 1.5 + 1.8).toFixed(2);
+  const rise  = -(100 + Math.random() * 150) + 'px';
+  const rise2 = -(180 + Math.random() * 100) + 'px';
+  const rot   = (Math.random() * 20 - 10) + 'deg';
+  const rot2  = (Math.random() * 30 - 15) + 'deg';
+  p.style.cssText = `left:${x}vw;top:${30 + Math.random()*40}vh;font-size:${sz}px;animation-duration:${dur}s;--rise:${rise};--rise2:${rise2};--rot:${rot};--rot2:${rot2}`;
+  p.textContent = ['$','✦','★','✨','🎉','💚','🏔'][Math.floor(Math.random()*7)];
+  document.body.appendChild(p);
+  setTimeout(() => p.remove(), parseFloat(dur) * 1000 + 300);
+}
+
+/* ── WEBSOCKET CONNECTION ── */
+let ws;
+
+function connectWebSocket() {
+  const statusEl = document.getElementById('status-line');
+  statusEl.className = 'status-line';
+  statusEl.innerHTML = '<span class="spinner"></span><span>Connecting...</span>';
+
+  const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(wsProto + '//' + location.host + '/');
+
+  ws.onopen = () => {
+    console.log('Connected to thermometer server');
+    statusEl.innerHTML = '<span>&#128994; Connected (Live)</span>';
+    statusEl.classList.remove('error');
+  };
+
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.donors && Array.isArray(data.donors)) {
+        const incoming = data.donors;
+        const prevKeys = donorKeyBaseline;
+        const nextKeys = new Set(incoming.map(donorFingerprint));
+        const newcomers = [];
+        if (prevKeys) {
+          for (let i = 0; i < incoming.length; i++) {
+            const d = incoming[i];
+            if (!prevKeys.has(donorFingerprint(d))) newcomers.push(d);
+          }
+        }
+        donorKeyBaseline = nextKeys;
+
+        window.donorList = incoming;
+        renderDonorList(incoming);
+        const totalRaised = incoming.reduce((sum, donor) => sum + donor.amount, 0);
+        updateDisplay(totalRaised);
+
+        if (prevKeys && newcomers.length) {
+          newcomers.forEach((d) => enqueueNewDonorCelebration(d));
+        }
+      }
+    } catch (e) {
+      console.error("Error parsing WebSocket message:", e);
+    }
+  };
+
+  ws.onclose = () => {
+    console.log('Connection lost. Reconnecting...');
+    statusEl.className = 'status-line error';
+    statusEl.innerHTML = '<span>&#9888; Reconnecting...</span>';
+    setTimeout(connectWebSocket, 3000);
+  };
+
+  ws.onerror = (err) => {
+    console.error('WebSocket Error:', err);
+    ws.close();
+  };
+}
+
+/* ── INIT ── */
+buildStars();
+renderDonorList([]);
+window.addEventListener('load', () => {
+  buildTicks();
+  connectWebSocket();
+  requestAnimationFrame(() => refreshDonorMarquee());
+
+  const testBtn = document.getElementById('test-new-donor-btn');
+  if (testBtn) {
+    testBtn.addEventListener('click', () => {
+      enqueueNewDonorCelebration({
+        name: 'Swag Daddy',
+        amount: 1000000,
+        currency: 'usd'
+      });
+    });
+  }
+});
+let rTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(rTimer);
+  rTimer = setTimeout(() => {
+    buildTicks();
+    if (lastRaised >= 0) updateDisplay(lastRaised);
+    refreshDonorMarquee();
+  }, 200);
+});
+</script>
+</body>
+</html>
