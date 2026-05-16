@@ -56,6 +56,14 @@
       },
     });
 
+    function onCheersSynced(result) {
+      if (result.changed) {
+        pinList.setPins(pins);
+      }
+      cheerTotal = result.total;
+      TDM.updateQrCheerTotal(cheerTotal);
+    }
+
     TDM.subscribeSharesRealtime(map, {
       onShareInsert: function (info) {
         syncPinInList(info.pin);
@@ -68,6 +76,15 @@
         syncCheerTotalFromPins();
         if (info.pin) pinList.updatePin(info.pin);
       },
+    });
+
+    /* TV dashboard: poll every few seconds so cheers update even without Supabase Realtime */
+    TDM.startCheersPoll({
+      map: map,
+      getPins: function () {
+        return pins;
+      },
+      onSync: onCheersSynced,
     });
 
     TDM.scheduleMapResize(map, embedRoot || map.getContainer().parentElement);

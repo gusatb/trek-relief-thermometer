@@ -48,6 +48,72 @@
       });
   };
 
+  TDM.refreshPinsCheerState = function (pins, map) {
+    return TDM.loadSharesAgg().then(function (agg) {
+      TDM.attachSharesToPins(pins, agg.byPinId);
+      if (map) {
+        pins.forEach(function (p) {
+          const marker = TDM.markersByPinId[Number(p.id)];
+          if (marker && marker._dreamPin) {
+            marker._dreamPin.share_count = TDM.cheerCount(p);
+            marker._dreamPin.share_names = (p.share_names || []).slice();
+            TDM.refreshMarkerIcon(marker);
+          }
+        });
+      }
+      return agg;
+    });
+  };
+
+  /**
+   * Poll cheer counts from Supabase (used on TV embed when Realtime is unavailable).
+   * Returns a stop function.
+   */
+  TDM.startCheersPoll = function (options) {
+    const opts = options || {};
+    const intervalMs = opts.intervalMs || TDM.config.EMBED_CHEER_POLL_MS || 6000;
+    let timer = null;
+    let lastSig = "";
+
+    function cheerSignature(pinArr) {
+      return pinArr
+        .map(function (p) {
+          return String(p.id) + ":" + TDM.cheerCount(p);
+        })
+        .join("|");
+    }
+
+    function tick() {
+      const getPins = opts.getPins;
+      if (typeof getPins !== "function") return Promise.resolve();
+      const pinArr = getPins();
+      return TDM.refreshPinsCheerState(pinArr, opts.map).then(function (agg) {
+        const sig = cheerSignature(pinArr);
+        const changed = sig !== lastSig;
+        lastSig = sig;
+        if (typeof opts.onSync === "function") {
+          opts.onSync({ pins: pinArr, total: agg.total, changed: changed });
+        }
+      });
+    }
+
+    tick().catch(function (e) {
+      console.warn("cheers poll:", e);
+    });
+    timer = global.setInterval(function () {
+      tick().catch(function (e) {
+        console.warn("cheers poll:", e);
+      });
+    }, intervalMs);
+
+    return function stop() {
+      if (timer) {
+        global.clearInterval(timer);
+        timer = null;
+      }
+    };
+  };
+
   TDM.updateDreamShareName = function (shareId, sharedBy) {
     const name = String(sharedBy || "").trim();
     if (!name) return Promise.reject(new Error("Name is required"));

@@ -36,6 +36,8 @@
     SPOTLIGHT_DURATION_MS: 6200,
     /** After a new-dream zoom-in, return to world view (TV embed). */
     SPOTLIGHT_ZOOM_OUT_MS: 15000,
+    /** TV embed: poll Supabase for new cheers (backup if Realtime is off). */
+    EMBED_CHEER_POLL_MS: 6000,
   };
 
   global.TDM.getMapPublicUrl = function () {

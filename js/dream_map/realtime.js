@@ -97,7 +97,10 @@
     const sb = TDM.getSupabase();
     const table = cfg.SHARES_TABLE;
 
-    sb.channel("map_pin_shares_realtime")
+    const channelName =
+      "map_pin_shares_" + String(Date.now()) + "_" + String(Math.random()).slice(2, 8);
+
+    sb.channel(channelName)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: table },
@@ -128,6 +131,20 @@
           }
         }
       )
-      .subscribe();
+      .subscribe(function (status, err) {
+        if (status === "SUBSCRIBED") {
+          TDM._sharesRealtimeLive = true;
+        } else if (
+          status === "CHANNEL_ERROR" ||
+          status === "TIMED_OUT" ||
+          status === "CLOSED"
+        ) {
+          TDM._sharesRealtimeLive = false;
+          console.warn("Dream map cheers realtime:", status, err || "");
+          if (typeof h.onRealtimeUnavailable === "function") {
+            h.onRealtimeUnavailable(status);
+          }
+        }
+      });
   };
 })(typeof window !== "undefined" ? window : this);

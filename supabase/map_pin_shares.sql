@@ -3,10 +3,12 @@
 --
 -- If the app still says "schema cache", wait ~30s or: Settings → API → Reload schema
 --
--- Live cheer updates: enable Realtime for this table (pick one):
+-- Live cheer updates (instant on /map and thermometer when enabled):
 --   Dashboard → Database → Replication → supabase_realtime → enable map_pin_shares
---   OR run the line below once in SQL (ignore error if already added):
+--   OR run once in SQL (ignore error if already added):
 -- alter publication supabase_realtime add table public.map_pin_shares;
+--
+-- The TV embed also polls every ~6s, so cheers still update if Realtime is off.
 
 create table if not exists public.map_pin_shares (
   id bigint generated always as identity primary key,
