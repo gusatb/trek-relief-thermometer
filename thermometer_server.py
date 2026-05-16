@@ -304,11 +304,27 @@ async def process_request(arg1, arg2=None):
             response.headers["Location"] = routed[1]
             return response
         _, content_type, raw = routed
-        response = connection.respond(HTTPStatus.OK, raw)
-        response.headers["Content-Type"] = content_type
-        if p.startswith(_STATIC_PREFIXES):
-            response.headers["Cache-Control"] = "public, max-age=300"
-        return response
+        # websockets 12+ respond() expects str; use Response for bytes (HTML/JS/CSS/images).
+        try:
+            from websockets.datastructures import Headers
+            from websockets.http11 import Response
+
+            hdrs = Headers([("Content-Type", content_type)])
+            if p.startswith(_STATIC_PREFIXES):
+                hdrs["Cache-Control"] = "public, max-age=300"
+            return Response(
+                HTTPStatus.OK.value,
+                HTTPStatus.OK.phrase,
+                hdrs,
+                raw,
+            )
+        except ImportError:
+            body = raw.decode("utf-8", errors="replace")
+            response = connection.respond(HTTPStatus.OK, body)
+            response.headers["Content-Type"] = content_type
+            if p.startswith(_STATIC_PREFIXES):
+                response.headers["Cache-Control"] = "public, max-age=300"
+            return response
 
     # Legacy API (websockets 10.x / dist packages): (path, request_headers)
     path, request_headers = arg1, arg2
