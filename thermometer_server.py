@@ -194,11 +194,32 @@ def _norm_http_path(path: str) -> str:
     return p or "/"
 
 
+_STATIC_PREFIXES = ("/js/", "/css/", "/vendor/")
+_MIME_BY_EXT = {
+    ".css": "text/css; charset=utf-8",
+    ".js": "application/javascript; charset=utf-8",
+    ".html": "text/html; charset=utf-8",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".svg": "image/svg+xml",
+    ".woff2": "font/woff2",
+    ".woff": "font/woff",
+}
+
+
+def _content_type_for(path: Path) -> str:
+    return _MIME_BY_EXT.get(path.suffix.lower(), "application/octet-stream")
+
+
 def _try_serve_web_static(norm_path: str):
-    """Serve files under web/js/ and web/css/ (dream map modules, styles, bridge)."""
-    if not (norm_path.startswith("/js/") or norm_path.startswith("/css/")):
+    """Serve dream map assets under web/js/, web/css/, and web/vendor/."""
+    if not any(norm_path.startswith(p) for p in _STATIC_PREFIXES):
         return None
     rel = norm_path.lstrip("/")
+    if not rel or ".." in rel.split("/"):
+        return None
     fp = (_WEB_DIR / rel).resolve()
     try:
         fp.relative_to(_WEB_DIR.resolve())
@@ -206,11 +227,27 @@ def _try_serve_web_static(norm_path: str):
         return None
     if not fp.is_file():
         return None
-    if norm_path.endswith(".css"):
-        ct = "text/css; charset=utf-8"
-    else:
-        ct = "application/javascript; charset=utf-8"
-    return ("bytes", ct, fp.read_bytes())
+    return ("bytes", _content_type_for(fp), fp.read_bytes())
+
+
+def _verify_deploy_assets():
+    """Warn at startup if map assets are missing (common deploy mistake)."""
+    required = [
+        "css/dream_map_embed.css",
+        "css/dream_map_interactive.css",
+        "js/dream_map/config.js",
+        "js/dream_map/map-core.js",
+        "js/dream_map_shared.js",
+        "js/leaflet-loader.js",
+        "vendor/leaflet/1.9.4/leaflet.js",
+        "vendor/leaflet/1.9.4/leaflet.css",
+    ]
+    missing = [r for r in required if not (_WEB_DIR / r).is_file()]
+    if missing:
+        print("WARNING: Missing map assets (map may not render on this host):")
+        for m in missing:
+            print(f"  - {m}")
+        print("Deploy the full web/ folder (js/, css/, vendor/) and restart the server.")
 
 
 def _http_route(norm_path: str):
@@ -230,6 +267,17 @@ def _http_route(norm_path: str):
         return ("bytes", "text/html; charset=utf-8", MAP_ADMIN_BYTES)
     if norm_path == "/js/dream_map_shared.js":
         return ("bytes", "application/javascript; charset=utf-8", SHARED_MAP_JS_BYTES)
+    if norm_path == "/health":
+        ok = all(
+            (_WEB_DIR / r).is_file()
+            for r in (
+                "css/dream_map_embed.css",
+                "js/dream_map/map-core.js",
+                "vendor/leaflet/1.9.4/leaflet.js",
+            )
+        )
+        payload = json.dumps({"ok": ok, "web_dir": str(_WEB_DIR)}).encode()
+        return ("bytes", "application/json; charset=utf-8", payload)
     return None
 
 
@@ -256,9 +304,10 @@ async def process_request(arg1, arg2=None):
             response.headers["Location"] = routed[1]
             return response
         _, content_type, raw = routed
-        body = raw.decode("utf-8", errors="replace")
-        response = connection.respond(HTTPStatus.OK, body)
+        response = connection.respond(HTTPStatus.OK, raw)
         response.headers["Content-Type"] = content_type
+        if p.startswith(_STATIC_PREFIXES):
+            response.headers["Cache-Control"] = "public, max-age=300"
         return response
 
     # Legacy API (websockets 10.x / dist packages): (path, request_headers)
@@ -329,6 +378,7 @@ async def broadcast_loop():
 
 
 async def main(host: str, port: int):
+    _verify_deploy_assets()
     async with websockets.serve(
         handler,
         host,
@@ -343,6 +393,7 @@ async def main(host: str, port: int):
             f"Thermometer: {scheme}://{host_hint}{port_bit}/thermometer\n"
             f"Dream map:   {scheme}://{host_hint}{port_bit}/map\n"
             f"Map admin:   {scheme}://{host_hint}{port_bit}/map_admin\n"
+            f"Health:      {scheme}://{host_hint}{port_bit}/health\n"
             f"WebSocket:   {ws_scheme}://{host_hint}{port_bit}/ (same port)\n"
             f"(Use the droplet's public IP or DNS in the browser.)"
         )

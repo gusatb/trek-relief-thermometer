@@ -4,8 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dream Map (embedded)</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="/css/dream_map_embed.css">
+  <style>
+    /* Critical layout — keeps map + bottom row if external CSS fails to load */
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+    .embed-root {
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) minmax(150px, 34%);
+      height: 100vh;
+      height: 100dvh;
+    }
+    .embed-map-pane { min-height: 0; position: relative; overflow: hidden; }
+    .embed-map-pane #map { height: 100%; width: 100%; }
+    .embed-bottom-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 0;
+    }
+  </style>
 </head>
 <body>
 <div class="embed-root" id="embed-root">
@@ -32,7 +48,7 @@
     </section>
   </div>
 </div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/js/leaflet-loader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script src="/js/dream_map/config.js"></script>
@@ -48,8 +64,21 @@
 <script src="/js/dream_map/tv-embed.js"></script>
 <script src="/js/dream_map_shared.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+function bootEmbed() {
+  if (typeof DreamMap === "undefined") {
+    console.error("Dream map embed: DreamMap modules did not load");
+    return;
+  }
   DreamMap.initEmbedded("map").catch(function (e) { console.error(e); });
+}
+document.addEventListener("DOMContentLoaded", function () {
+  loadLeaflet(function (err) {
+    if (err) {
+      console.error(err);
+      return;
+    }
+    bootEmbed();
+  });
 });
 </script>
 </body>

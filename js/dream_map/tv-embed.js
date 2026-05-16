@@ -50,6 +50,23 @@
     });
 
     TDM.scheduleMapResize(map, embedRoot || map.getContainer().parentElement);
+    global.setTimeout(function () {
+      try {
+        map.invalidateSize();
+      } catch (e) {}
+    }, 100);
+    global.setTimeout(function () {
+      try {
+        map.invalidateSize();
+      } catch (e) {}
+    }, 800);
+    if (global.parent !== global) {
+      global.addEventListener("load", function () {
+        try {
+          map.invalidateSize();
+        } catch (e) {}
+      });
+    }
     return { map: map, pins: pins };
   };
 })(typeof window !== "undefined" ? window : this);

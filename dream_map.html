@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trek Relief | Dream With Purpose Map</title>
 
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-
     <link rel="stylesheet" href="/css/dream_map_interactive.css">
 </head>
 
@@ -313,7 +310,7 @@
 </dialog>
 
 <!-- JS Libs -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/js/leaflet-loader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/js/dream_map/config.js"></script>
 <script src="/js/dream_map/util.js"></script>
@@ -328,8 +325,21 @@
 <script src="/js/dream_map/interactive.js"></script>
 <script src="/js/dream_map_shared.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+function bootMap() {
+  if (typeof DreamMap === "undefined") {
+    console.error("DreamMap modules did not load");
+    return;
+  }
   DreamMap.initFullPage().catch(function (e) { console.error(e); });
+}
+document.addEventListener("DOMContentLoaded", function () {
+  loadLeaflet(function (err) {
+    if (err) {
+      console.error(err);
+      return;
+    }
+    bootMap();
+  });
 });
 </script>
 
