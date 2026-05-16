@@ -59,6 +59,19 @@
         .btn-export:hover {
             background: #2ecc71;
         }
+
+        h2.section-title {
+            text-align: center;
+            color: #2c3e50;
+            margin: 2.5rem 0 0.5rem;
+        }
+
+        #cheer-count {
+            text-align: center;
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: #566573;
+        }
     </style>
 </head>
 
@@ -86,6 +99,22 @@
         <tbody id="pin-table"></tbody>
     </table>
 
+    <h2 class="section-title">Cheers</h2>
+    <div id="cheer-count">Loading cheers…</div>
+
+    <table role="grid">
+        <thead>
+            <tr>
+                <th>Dream</th>
+                <th>Dream Location</th>
+                <th>Cheered By</th>
+                <th>Submitted</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody id="cheer-table"></tbody>
+    </table>
+
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -95,6 +124,31 @@
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let cachedPins = [];
+        let cachedShares = [];
+
+        function escapeHtml(s) {
+            return String(s ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;");
+        }
+
+        async function deleteCheer(id) {
+            if (!confirm("Delete this cheer?")) return;
+
+            const { error } = await supabaseClient
+                .from("map_pin_shares")
+                .delete()
+                .eq("id", id);
+
+            if (error) {
+                alert("Delete failed: " + error.message);
+                return;
+            }
+
+            await loadAll();
+        }
 
         async function deletePin(id) {
             if (!confirm("Are you sure you want to delete this dream?")) return;
@@ -109,7 +163,7 @@
                 return;
             }
 
-            loadPins(); // refresh table after deletion
+            await loadAll();
         }
 
         function exportCSV() {
@@ -181,9 +235,78 @@
 
                 table.appendChild(row);
             });
+
+            await loadShares();
         }
 
-        loadPins();
+        async function loadShares() {
+            const table = document.getElementById("cheer-table");
+            const cheerCountBox = document.getElementById("cheer-count");
+
+            table.innerHTML = "<tr><td colspan='5'>Fetching cheers…</td></tr>";
+
+            const { data, error } = await supabaseClient
+                .from("map_pin_shares")
+                .select("id, pin_id, shared_by, created_at, map_pins(name, location_name)")
+                .order("id", { ascending: false });
+
+            if (error) {
+                table.innerHTML =
+                    "<tr><td colspan='5'>Error loading cheers: " +
+                    escapeHtml(error.message) +
+                    "</td></tr>";
+                cheerCountBox.textContent = "Could not load cheers";
+                return;
+            }
+
+            cachedShares = data || [];
+            cheerCountBox.textContent = cachedShares.length + " cheers";
+
+            if (!cachedShares.length) {
+                table.innerHTML = "<tr><td colspan='5'>No cheers yet.</td></tr>";
+                return;
+            }
+
+            const pinById = {};
+            cachedPins.forEach((p) => {
+                pinById[p.id] = p;
+            });
+
+            table.innerHTML = "";
+
+            cachedShares.forEach((share) => {
+                const pin = share.map_pins || pinById[share.pin_id];
+                const dreamName = pin ? pin.name : "(deleted dream)";
+                const dreamLoc = pin ? pin.location_name : "—";
+                const cheeredBy = share.shared_by || "Anonymous";
+
+                const row = document.createElement("tr");
+                row.innerHTML =
+                    "<td>" +
+                    escapeHtml(dreamName) +
+                    "</td><td>" +
+                    escapeHtml(dreamLoc) +
+                    "</td><td>" +
+                    escapeHtml(cheeredBy) +
+                    "</td><td>" +
+                    escapeHtml(new Date(share.created_at).toLocaleString()) +
+                    "</td><td><button class=\"btn-delete\" data-cheer-id=\"" +
+                    share.id +
+                    "\">Delete</button></td>";
+
+                row.querySelector(".btn-delete").addEventListener("click", function () {
+                    deleteCheer(share.id);
+                });
+
+                table.appendChild(row);
+            });
+        }
+
+        async function loadAll() {
+            await loadPins();
+        }
+
+        loadAll();
     </script>
 
 </body>

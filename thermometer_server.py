@@ -194,8 +194,30 @@ def _norm_http_path(path: str) -> str:
     return p or "/"
 
 
+def _try_serve_web_static(norm_path: str):
+    """Serve files under web/js/ and web/css/ (dream map modules, styles, bridge)."""
+    if not (norm_path.startswith("/js/") or norm_path.startswith("/css/")):
+        return None
+    rel = norm_path.lstrip("/")
+    fp = (_WEB_DIR / rel).resolve()
+    try:
+        fp.relative_to(_WEB_DIR.resolve())
+    except ValueError:
+        return None
+    if not fp.is_file():
+        return None
+    if norm_path.endswith(".css"):
+        ct = "text/css; charset=utf-8"
+    else:
+        ct = "application/javascript; charset=utf-8"
+    return ("bytes", ct, fp.read_bytes())
+
+
 def _http_route(norm_path: str):
     """Return ('redirect', location) or ('bytes', content_type, data) or None."""
+    static = _try_serve_web_static(norm_path)
+    if static:
+        return static
     if norm_path == "/":
         return ("redirect", "/thermometer")
     if norm_path in ("/thermometer", "/thermometer.html"):

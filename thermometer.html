@@ -731,7 +731,7 @@
   <div class="content">
 
     <div class="left-embedded-map" aria-label="Dream With Purpose map">
-      <iframe src="/map/embed" title="Dream With Purpose map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      <iframe id="dream-map-embed" src="/map/embed" title="Dream With Purpose map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
     </div>
 
     <div class="thermo-wrap">
@@ -1306,7 +1306,12 @@ function connectWebSocket() {
         updateDisplay(totalRaised);
 
         if (donorCelebrationsPrimed && newcomers.length) {
-          newcomers.forEach((d) => enqueueNewDonorCelebration(d));
+          newcomers.forEach((d) => {
+            enqueueNewDonorCelebration(d);
+            if (window.TrekThermometerBridge) {
+              TrekThermometerBridge.postDonationSpotlight(d);
+            }
+          });
         }
       }
     } catch (e) {
@@ -1356,5 +1361,6 @@ window.addEventListener('resize', () => {
   }, 200);
 });
 </script>
+<script src="/js/thermometer-bridge.js"></script>
 </body>
 </html>

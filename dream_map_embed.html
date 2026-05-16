@@ -5,174 +5,47 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dream Map (embedded)</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <style>
-    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #f4f1ea; }
-    .embed-root {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      height: 100dvh;
-    }
-    .embed-map-pane {
-      flex: 3;
-      min-height: 0;
-      position: relative;
-    }
-    .embed-map-pane #map { height: 100%; width: 100%; z-index: 1; }
-    .embed-pin-list-pane {
-      flex: 1;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-      border-top: 2px solid #2c3e50;
-      background: #e8e4dc;
-    }
-    .embed-pin-list-head-row {
-      flex-shrink: 0;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 2.35rem;
-      gap: 6px;
-      align-items: baseline;
-      font-family: system-ui, sans-serif;
-      font-size: 9px;
-      font-weight: 800;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: #2c3e50;
-      padding: 5px 10px 4px;
-      border-bottom: 1px solid rgba(44, 62, 80, 0.2);
-    }
-    .embed-head-cheers {
-      text-align: right;
-      letter-spacing: 0.06em;
-      color: #c87f0a;
-    }
-    .embed-pin-list-viewport {
-      flex: 1;
-      min-height: 0;
-      overflow: hidden;
-      position: relative;
-      mask-image: linear-gradient(to bottom, transparent, #000 6px, #000 calc(100% - 6px), transparent);
-      -webkit-mask-image: linear-gradient(to bottom, transparent, #000 6px, #000 calc(100% - 6px), transparent);
-    }
-    .embed-pin-list-viewport.embed-pin-list-static {
-      overflow-y: auto;
-      mask-image: none;
-      -webkit-mask-image: none;
-    }
-    .embed-pin-list-tape { will-change: transform; }
-    .embed-pin-list-tape.embed-pin-tape-autoscroll {
-      animation: embed-pin-tape-scroll linear infinite;
-    }
-    @keyframes embed-pin-tape-scroll {
-      from { transform: translateY(0); }
-      to { transform: translateY(-50%); }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .embed-pin-list-tape.embed-pin-tape-autoscroll { animation: none; }
-    }
-    .embed-pin-segment { padding: 0 2px 0 0; }
-    .embed-pin-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 2.35rem;
-      gap: 6px;
-      align-items: baseline;
-      padding: 5px 10px;
-      border-bottom: 1px solid rgba(44, 62, 80, 0.15);
-      font-family: system-ui, sans-serif;
-      font-size: 11px;
-    }
-    .embed-pin-row-empty {
-      grid-template-columns: 1fr;
-    }
-    .embed-pin-row:last-child { border-bottom: none; }
-    .embed-pin-name {
-      font-weight: 700;
-      color: #2c3e50;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .embed-pin-place {
-      color: #1e8449;
-      font-weight: 600;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      text-align: right;
-    }
-    .embed-pin-cheers {
-      font-weight: 800;
-      font-variant-numeric: tabular-nums;
-      text-align: right;
-      color: #c87f0a;
-      font-size: 11px;
-    }
-    .name-label {
-      background: rgba(44, 62, 80, 0.9);
-      border: 1px solid #27ae60;
-      color: white; font-weight: 700; font-size: 10px;
-      padding: 2px 6px; border-radius: 4px;
-      pointer-events: none;
-    }
-    .pin-pulse {
-      background-color: #27ae60;
-      width: 14px; height: 14px; border-radius: 50%;
-      border: 2px solid #fff;
-      position: relative;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-    .pin-pulse::after {
-      content: '';
-      position: absolute; top: -2px; left: -2px;
-      width: 14px; height: 14px; border-radius: 50%;
-      border: 2px solid #27ae60;
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0% { transform: scale(1); opacity: 1; }
-      100% { transform: scale(3); opacity: 0; }
-    }
-    .pin-pulse--cheers {
-      background-color: #f39c12;
-      box-shadow: 0 0 0 2px rgba(243, 156, 18, 0.35);
-    }
-    .pin-pulse--cheers::after {
-      border-color: #f39c12;
-    }
-    @keyframes dream-marker-pop-anim {
-      0% { transform: scale(1); }
-      35% { transform: scale(1.38); }
-      100% { transform: scale(1); }
-    }
-    .leaflet-marker-icon.dream-marker-pop {
-      animation: dream-marker-pop-anim 0.58s cubic-bezier(0.34, 1.4, 0.64, 1);
-    }
-  </style>
+  <link rel="stylesheet" href="/css/dream_map_embed.css">
 </head>
 <body>
 <div class="embed-root" id="embed-root">
   <div class="embed-map-pane">
     <div id="map"></div>
   </div>
-  <div class="embed-pin-list-pane" aria-label="Dream submissions">
-    <div class="embed-pin-list-head-row" aria-hidden="false">
-      <span class="embed-head-dream">Dream</span>
-      <span class="embed-head-place">Place</span>
-      <span class="embed-head-cheers" title="People who said they share this dream">Cheers</span>
-    </div>
-    <div class="embed-pin-list-viewport" id="embed-pin-viewport">
-      <div class="embed-pin-list-tape" id="embed-pin-tape">
-        <div class="embed-pin-segment" id="embed-pin-seg-a"></div>
-        <div class="embed-pin-segment" id="embed-pin-seg-b" aria-hidden="true"></div>
+  <div class="embed-bottom-row">
+    <section class="embed-names-pane" aria-label="Recent dreams">
+      <div class="embed-pin-list-head-row">
+        <span class="embed-pin-col embed-pin-col--dream">Dream</span>
+        <span class="embed-pin-col embed-pin-col--place">Place</span>
+        <span class="embed-pin-col embed-pin-col--cheer">Cheer</span>
       </div>
-    </div>
+      <div class="embed-pin-list-viewport" id="embed-pin-viewport">
+        <div class="embed-pin-list-tape" id="embed-pin-tape">
+          <div class="embed-pin-segment" id="embed-pin-seg-a"></div>
+          <div class="embed-pin-segment" id="embed-pin-seg-b" aria-hidden="true"></div>
+        </div>
+      </div>
+    </section>
+    <section class="embed-qr-pane" aria-label="Scan to add your dream">
+      <h2 class="embed-qr-headline">Add Your Dream</h2>
+      <div id="embed-qr-host" class="embed-qr-host"></div>
+    </section>
   </div>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script src="/js/dream_map/config.js"></script>
+<script src="/js/dream_map/util.js"></script>
+<script src="/js/dream_map/map-core.js"></script>
+<script src="/js/dream_map/cheers.js"></script>
+<script src="/js/dream_map/pins.js"></script>
+<script src="/js/dream_map/mobile-cheer-ui.js"></script>
+<script src="/js/dream_map/realtime.js"></script>
+<script src="/js/dream_map/tv-spotlight.js"></script>
+<script src="/js/dream_map/tv-names-tape.js"></script>
+<script src="/js/dream_map/tv-qr-panel.js"></script>
+<script src="/js/dream_map/tv-embed.js"></script>
 <script src="/js/dream_map_shared.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
