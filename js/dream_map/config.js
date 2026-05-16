@@ -38,6 +38,12 @@
     SPOTLIGHT_ZOOM_OUT_MS: 15000,
     /** TV embed: poll Supabase for new cheers (backup if Realtime is off). */
     EMBED_CHEER_POLL_MS: 6000,
+    /** TV embed: eastward map auto-pan (pixels per second). */
+    MAP_PAN_SPEED_DEFAULT: 25,
+    MAP_PAN_SPEED_MIN: 5,
+    MAP_PAN_SPEED_MAX: 80,
+    MAP_PAN_SPEED_STORAGE_KEY: "trek_embed_map_pan_speed",
+    TREK_LOGO_URL: "/trek_relief_logo.svg",
   };
 
   global.TDM.getMapPublicUrl = function () {

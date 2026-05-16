@@ -10,6 +10,7 @@
     TDM.initTvQrPanel();
 
     const map = TDM.createMap(id, { embed: true });
+    TDM.initEmbedMapControls();
     TDM.initTvSpotlightBridge(map);
 
     const pinList = TDM.createEmbedPinListMarquee(

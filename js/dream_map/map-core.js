@@ -2,6 +2,34 @@
   "use strict";
 
   const TDM = global.TDM;
+  const cfg = TDM.config;
+
+  let _mapPanPxPerSecond = cfg.MAP_PAN_SPEED_DEFAULT || 25;
+
+  try {
+    const stored = global.localStorage.getItem(cfg.MAP_PAN_SPEED_STORAGE_KEY);
+    if (stored != null && stored !== "") {
+      _mapPanPxPerSecond = Number(stored);
+    }
+  } catch (e) {}
+
+  TDM.getMapPanSpeed = function () {
+    return _mapPanPxPerSecond;
+  };
+
+  TDM.setMapPanSpeed = function (pxPerSecond) {
+    const min = cfg.MAP_PAN_SPEED_MIN || 5;
+    const max = cfg.MAP_PAN_SPEED_MAX || 80;
+    const n = Number(pxPerSecond);
+    _mapPanPxPerSecond = Math.max(min, Math.min(max, Number.isFinite(n) ? n : min));
+    try {
+      global.localStorage.setItem(
+        cfg.MAP_PAN_SPEED_STORAGE_KEY,
+        String(_mapPanPxPerSecond)
+      );
+    } catch (e) {}
+    return _mapPanPxPerSecond;
+  };
 
   function refreshEmbedMarkers(map) {
     map.eachLayer(function (layer) {
@@ -15,7 +43,6 @@
   function startThermometerEmbedEastwardPan(map) {
     if (global.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    const pxPerSecond = 25;
     let last = performance.now();
     let running = false;
     let tick = 0;
@@ -26,7 +53,7 @@
       try {
         const el = map.getContainer();
         if (!el || !el.isConnected) return;
-        const dx = pxPerSecond * dt;
+        const dx = TDM.getMapPanSpeed() * dt;
         if (dx > 0) map.panBy([dx, 0], { animate: false });
         tick += 1;
         if (tick % 8 === 0) refreshEmbedMarkers(map);

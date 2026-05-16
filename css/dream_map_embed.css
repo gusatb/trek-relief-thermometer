@@ -49,6 +49,92 @@ body {
   z-index: 1;
 }
 
+/* Trek Relief logo + hidden map pan speed control (top-left) */
+.embed-map-brand {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.embed-map-brand-btn,
+.embed-map-speed-panel {
+  pointer-events: auto;
+}
+
+.embed-map-brand-btn {
+  display: block;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
+  border-radius: 6px;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35));
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.embed-map-brand-btn:hover {
+  transform: scale(1.03);
+  filter: drop-shadow(0 3px 12px rgba(0, 0, 0, 0.45));
+}
+
+.embed-map-brand-btn:focus-visible {
+  outline: 2px solid #a8d470;
+  outline-offset: 3px;
+}
+
+.embed-map-brand-logo {
+  display: block;
+  height: clamp(36px, 5vh, 52px);
+  width: auto;
+  max-width: min(160px, 42vw);
+  object-fit: contain;
+}
+
+.embed-map-speed-panel {
+  background: rgba(18, 21, 16, 0.94);
+  border: 1px solid rgba(168, 212, 112, 0.35);
+  border-radius: 8px;
+  padding: 10px 12px;
+  min-width: 180px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.embed-map-speed-panel[hidden] {
+  display: none !important;
+}
+
+.embed-map-speed-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(232, 240, 220, 0.75);
+  margin-bottom: 6px;
+}
+
+.embed-map-speed-value {
+  font-variant-numeric: tabular-nums;
+  color: #a8d470;
+}
+
+.embed-map-speed-range {
+  width: 100%;
+  margin: 0;
+  accent-color: #a8d470;
+}
+
 /* Scrolling dream names (left half) */
 .embed-names-pane {
   min-height: 0;

@@ -267,6 +267,10 @@ def _http_route(norm_path: str):
         return ("bytes", "text/html; charset=utf-8", MAP_ADMIN_BYTES)
     if norm_path == "/js/dream_map_shared.js":
         return ("bytes", "application/javascript; charset=utf-8", SHARED_MAP_JS_BYTES)
+    if norm_path == "/trek_relief_logo.svg":
+        logo = _WEB_DIR / "trek_relief_logo.svg"
+        if logo.is_file():
+            return ("bytes", "image/svg+xml", logo.read_bytes())
     if norm_path == "/health":
         ok = all(
             (_WEB_DIR / r).is_file()
