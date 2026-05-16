@@ -37,6 +37,116 @@ body {
   color: #f39c12;
 }
 
+.map-stats-hit {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0 2px;
+  margin: 0 -2px;
+}
+
+.map-stats-hit:hover,
+.map-stats-hit:focus {
+  outline: none;
+  background: rgba(39, 174, 96, 0.2);
+}
+
+.demo-mode-panel {
+  position: fixed;
+  top: 48px;
+  right: 12px;
+  z-index: 1001;
+  width: min(280px, calc(100vw - 24px));
+  padding: 12px 14px;
+  background: rgba(44, 62, 80, 0.97);
+  border: 1px solid #27ae60;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.demo-mode-panel[hidden] {
+  display: none !important;
+}
+
+.demo-mode-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ecf0f1;
+  cursor: pointer;
+}
+
+.demo-mode-toggle-label input {
+  width: 18px;
+  height: 18px;
+  accent-color: #27ae60;
+}
+
+.demo-mode-hint {
+  margin: 8px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #bdc3c7;
+}
+
+.dream-get-involved-qr-wrap {
+  text-align: center;
+  margin-top: 4px;
+}
+
+.dream-get-involved-qr-label {
+  margin: 0 0 8px;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #2c3e50;
+}
+
+.dream-dialog-panel .dream-get-involved-qr-label {
+  color: #a8d470;
+}
+
+.dream-dialog-panel .dream-get-involved-qr-hint {
+  color: #bdc3c7;
+}
+
+.dream-get-involved-qr-host {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+}
+
+.dream-get-involved-qr-host canvas {
+  display: block;
+  border-radius: 6px;
+  max-width: 100%;
+  height: auto !important;
+  width: auto !important;
+}
+
+.dream-get-involved-qr-hint {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: #7f8c8d;
+}
+
+.dream-get-involved-qr-fallback {
+  font-size: 11px;
+  word-break: break-all;
+  color: #7f8c8d;
+}
+
+.success-modal-involved {
+  margin: 12px 0 4px;
+}
+
+.success-modal-involved .dream-fund-cta {
+  margin-top: 0;
+}
+
 .fab-add-dream {
   position: fixed;
   bottom: calc(16px + env(safe-area-inset-bottom, 0px));

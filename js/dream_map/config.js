@@ -44,6 +44,8 @@
     MAP_PAN_SPEED_MAX: 60,
     MAP_PAN_SPEED_STORAGE_KEY: "trek_embed_map_pan_speed",
     TREK_LOGO_URL: "/images/trek_relief_logo.png",
+    /** /map kiosk: show Get Involved as QR (no clickable link). */
+    DEMO_MODE_STORAGE_KEY: "trek_map_demo_mode",
   };
 
   global.TDM.getMapPublicUrl = function () {

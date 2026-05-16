@@ -10,7 +10,7 @@
 
     const titleEl = document.getElementById("success-modal-title");
     const bodyEl = document.getElementById("success-modal-body");
-    const cta = document.getElementById("success-modal-cta");
+    const involvedHost = document.getElementById("success-modal-involved");
 
     if (titleEl) titleEl.textContent = opts.title || "Thank you!";
     if (bodyEl) {
@@ -18,9 +18,10 @@
         opts.body ||
         "Your dream is on the map. Help Trek Relief make these programs real.";
     }
-    if (cta) {
-      cta.href = TDM.config.TREK_GET_INVOLVED_URL;
-      cta.textContent = opts.ctaLabel || "Get involved";
+
+    if (involvedHost) {
+      involvedHost.innerHTML = TDM.buildGetInvolvedBlockHtml();
+      TDM.hydrateGetInvolvedQrIn(involvedHost);
     }
 
     function close() {

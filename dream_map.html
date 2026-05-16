@@ -13,9 +13,18 @@
 <div id="map"></div>
 
 <div class="map-stats-float" id="counter-box" title="Dream pins and cheers">
-    <span><span id="pin-count">0</span> dreams</span>
+    <span class="map-stats-hit" id="map-stats-dreams-hit" role="button" tabindex="0" aria-expanded="false" aria-controls="demo-mode-panel" title="Tap for display options">
+      <span id="pin-count">0</span> dreams
+    </span>
     <span>·</span>
     <span class="counter-cheers"><span id="share-count">0</span> cheers</span>
+</div>
+<div class="demo-mode-panel" id="demo-mode-panel" hidden>
+  <label class="demo-mode-toggle-label">
+    <input type="checkbox" id="demo-mode-toggle" />
+    Demo mode
+  </label>
+  <p class="demo-mode-hint">Kiosk: show a QR instead of a link after cheer or dream submit. Phones scan to get involved.</p>
 </div>
 
 <button type="button" class="fab-add-dream" id="fab-add-dream">+ Add Your Dream</button>
@@ -302,7 +311,7 @@
   <div class="dream-dialog-panel">
     <h2 id="success-modal-title">Thank you!</h2>
     <p id="success-modal-body"></p>
-    <a id="success-modal-cta" class="btn-donate-cta" href="#" target="_blank" rel="noopener">Get involved</a>
+    <div id="success-modal-involved" class="success-modal-involved"></div>
     <div class="dream-dialog-actions">
       <button type="button" class="btn-secondary" data-success-close>Close</button>
     </div>
@@ -312,8 +321,10 @@
 <!-- JS Libs -->
 <script src="/js/leaflet-loader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script src="/js/dream_map/config.js"></script>
 <script src="/js/dream_map/util.js"></script>
+<script src="/js/dream_map/demo-mode.js"></script>
 <script src="/js/dream_map/map-core.js"></script>
 <script src="/js/dream_map/cheers.js"></script>
 <script src="/js/dream_map/pins.js"></script>

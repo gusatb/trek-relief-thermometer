@@ -114,8 +114,6 @@
   TDM.buildPinPopupSuccessHtml = function (pin, options) {
     const opts = options || {};
     const showNameForm = opts.showNameForm !== false;
-    const fundUrl = TDM.escapeHtml(TDM.config.TREK_GET_INVOLVED_URL || "#");
-
     let nameBlock = "";
     if (showNameForm) {
       nameBlock = buildNameOptInHtml(pin, opts.nameSubmitReady);
@@ -126,9 +124,7 @@
       buildSocialProofHtml(pin) +
       '<p class="dream-popup-success-msg"><em>Awesome! Help us make it happen.</em></p>' +
       nameBlock +
-      '<a class="dream-fund-cta" href="' +
-      fundUrl +
-      '" target="_blank" rel="noopener noreferrer">Get Involved</a>' +
+      TDM.buildGetInvolvedBlockHtml() +
       "</div>"
     );
   };
@@ -147,6 +143,10 @@
   function showSuccessPopup(marker, pin, options) {
     if (!marker) return;
     marker.setPopupContent(TDM.buildPinPopupSuccessHtml(pin, options || {}));
+    global.requestAnimationFrame(function () {
+      const el = marker.getPopup && marker.getPopup().getElement();
+      if (el) TDM.hydrateGetInvolvedQrIn(el);
+    });
   }
 
   TDM.refreshOpenPinPopup = function (marker) {
@@ -163,6 +163,10 @@
           nameSubmitReady: true,
         })
       );
+      global.requestAnimationFrame(function () {
+        const el = marker.getPopup && marker.getPopup().getElement();
+        if (el) TDM.hydrateGetInvolvedQrIn(el);
+      });
     } else {
       marker.setPopupContent(TDM.buildPinPopupHtml(pin));
     }

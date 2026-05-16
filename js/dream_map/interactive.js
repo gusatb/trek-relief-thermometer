@@ -40,6 +40,7 @@
     TDM.wireMapShareClicks(map);
 
     TDM.initWelcomeModal();
+    TDM.initDemoMode();
     TDM.initDreamSheet({
       onDreamSuccess: function (result) {
         TDM.showSuccessModal({
