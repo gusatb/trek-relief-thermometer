@@ -146,10 +146,32 @@ async def handler(websocket):
         clients.remove(websocket)
 
 
-async def process_request(path, request_headers):
-    """Serve static HTML on GET; return None so WebSocket handshakes proceed."""
-    upgrade = request_headers.get("Upgrade", "")
-    if upgrade.lower() == "websocket":
+async def process_request(arg1, arg2=None):
+    """Serve static HTML on GET; return None so WebSocket handshakes proceed.
+
+    websockets < 12: process_request(path: str, request_headers: Headers) -> tuple|None
+    websockets >= 12: process_request(connection, request: Request) -> Response|None
+    """
+    # New asyncio API (websockets 12+): ServerConnection has .respond()
+    if hasattr(arg1, "respond"):
+        connection, request = arg1, arg2
+        upgrade = (request.headers.get("Upgrade") or "").lower()
+        if upgrade == "websocket":
+            return None
+        p = request.path.split("?")[0]
+        if p in ("/", "/thermometer.html"):
+            html = THERMOMETER_BYTES.decode("utf-8", errors="replace")
+            response = connection.respond(HTTPStatus.OK, html)
+            response.headers["Content-Type"] = "text/html; charset=utf-8"
+            return response
+        if p == "/favicon.ico":
+            return connection.respond(HTTPStatus.NO_CONTENT, "")
+        return connection.respond(HTTPStatus.NOT_FOUND, "Not found\n")
+
+    # Legacy API (websockets 10.x / dist packages): (path, request_headers)
+    path, request_headers = arg1, arg2
+    upgrade = (request_headers.get("Upgrade") or "").lower()
+    if upgrade == "websocket":
         return None
 
     p = path.split("?")[0]
