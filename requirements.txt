@@ -1,0 +1,2 @@
+# Live thermometer server (web/thermometer_server.py)
+websockets>=10.0,<16
