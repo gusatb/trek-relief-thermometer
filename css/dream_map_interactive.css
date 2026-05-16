@@ -190,7 +190,12 @@ body {
   font-size: 10px;
   padding: 2px 6px;
   border-radius: 4px;
-  pointer-events: none;
+}
+
+.name-label--clickable,
+.leaflet-tooltip.name-label.leaflet-interactive {
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 .pin-pulse {

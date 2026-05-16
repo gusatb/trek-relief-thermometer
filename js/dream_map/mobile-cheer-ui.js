@@ -144,6 +144,25 @@
     marker.setPopupContent(TDM.buildPinPopupSuccessHtml(pin, options || {}));
   }
 
+  TDM.refreshOpenPinPopup = function (marker) {
+    if (!marker || !marker._dreamPin) return;
+    if (typeof marker.isPopupOpen !== "function" || !marker.isPopupOpen()) return;
+    const popupEl = marker.getPopup() && marker.getPopup().getElement();
+    if (!popupEl) return;
+    const pin = marker._dreamPin;
+    if (popupEl.querySelector(".dream-pin-popup--success")) {
+      const hasNameForm = !!popupEl.querySelector(".dream-popup-name-opt");
+      marker.setPopupContent(
+        TDM.buildPinPopupSuccessHtml(pin, {
+          showNameForm: hasNameForm,
+          nameSubmitReady: true,
+        })
+      );
+    } else {
+      marker.setPopupContent(TDM.buildPinPopupHtml(pin));
+    }
+  };
+
   function enableNameSubmitInPopup(marker) {
     const popupEl = marker.getPopup() && marker.getPopup().getElement();
     if (!popupEl) return;
@@ -269,11 +288,13 @@
       TDM.submitDreamShare(pinId, ANON_CHEER_NAME)
         .then(function (res) {
           const row = res.data && res.data[0];
-          if (marker && row && row.id != null) {
-            marker._lastCheerShareId = Number(row.id);
-            enableNameSubmitInPopup(marker);
+          if (row && row.id != null) {
+            if (marker) {
+              marker._lastCheerShareId = Number(row.id);
+              enableNameSubmitInPopup(marker);
+            }
+            TDM.markShareEchoDedupShareId(row.id);
           }
-          TDM.markShareEchoDedup(pinId, ANON_CHEER_NAME);
           if (typeof cb.onCheerSuccess === "function") {
             cb.onCheerSuccess({
               pinId: pinId,

@@ -33,8 +33,24 @@
     });
     pinList.setPins(pins);
 
+    function syncCheerTotalFromPins() {
+      cheerTotal = pins.reduce(function (sum, p) {
+        return sum + TDM.cheerCount(p);
+      }, 0);
+      TDM.updateQrCheerTotal(cheerTotal);
+    }
+
+    function syncPinInList(pin) {
+      if (!pin) return;
+      const idx = pins.findIndex(function (p) {
+        return Number(p.id) === Number(pin.id);
+      });
+      if (idx >= 0) pins[idx] = pin;
+    }
+
     TDM.subscribeRealtime(map, {
       onPinInsert: function (pin) {
+        pins.push(pin);
         pinList.addPin(pin);
         spotlight.onPinInsert(pin);
       },
@@ -42,10 +58,15 @@
 
     TDM.subscribeSharesRealtime(map, {
       onShareInsert: function (info) {
-        cheerTotal += 1;
-        TDM.updateQrCheerTotal(cheerTotal);
+        syncPinInList(info.pin);
+        syncCheerTotalFromPins();
         if (info.pin) pinList.updatePin(info.pin);
         spotlight.onShareInsert(info);
+      },
+      onShareDelete: function (info) {
+        syncPinInList(info.pin);
+        syncCheerTotalFromPins();
+        if (info.pin) pinList.updatePin(info.pin);
       },
     });
 

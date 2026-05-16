@@ -3,7 +3,10 @@
 --
 -- If the app still says "schema cache", wait ~30s or: Settings → API → Reload schema
 --
--- Optional live updates: Database → Replication → supabase_realtime → add map_pin_shares
+-- Live cheer updates: enable Realtime for this table (pick one):
+--   Dashboard → Database → Replication → supabase_realtime → enable map_pin_shares
+--   OR run the line below once in SQL (ignore error if already added):
+-- alter publication supabase_realtime add table public.map_pin_shares;
 
 create table if not exists public.map_pin_shares (
   id bigint generated always as identity primary key,

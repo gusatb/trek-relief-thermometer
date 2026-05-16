@@ -34,6 +34,8 @@
     },
     WELCOME_STORAGE_KEY: "trek_dream_welcome_dismissed",
     SPOTLIGHT_DURATION_MS: 6200,
+    /** After a new-dream zoom-in, return to world view (TV embed). */
+    SPOTLIGHT_ZOOM_OUT_MS: 15000,
   };
 
   global.TDM.getMapPublicUrl = function () {

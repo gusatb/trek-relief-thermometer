@@ -5,6 +5,7 @@
 
   let _supabaseClient = null;
   const _shareEchoDedupKeys = new Set();
+  const _ownShareIds = new Set();
 
   global.TDM.escapeHtml = function (s) {
     return String(s)
@@ -36,6 +37,25 @@
     const k = String(pinId) + "\0" + String(sharedBy).trim();
     if (_shareEchoDedupKeys.has(k)) {
       _shareEchoDedupKeys.delete(k);
+      return true;
+    }
+    return false;
+  };
+
+  /** Dedup realtime echo for a cheer row you just inserted (by share id). */
+  global.TDM.markShareEchoDedupShareId = function (shareId) {
+    const id = Number(shareId);
+    if (!id) return;
+    _ownShareIds.add(id);
+    global.setTimeout(function () {
+      _ownShareIds.delete(id);
+    }, 15000);
+  };
+
+  global.TDM.consumeShareEchoDedupShareId = function (shareId) {
+    const id = Number(shareId);
+    if (_ownShareIds.has(id)) {
+      _ownShareIds.delete(id);
       return true;
     }
     return false;

@@ -28,6 +28,25 @@
     marker.setIcon(TDM.divIconForPin(pin));
   };
 
+  TDM.wireMarkerTooltipClick = function (marker) {
+    function attach() {
+      const tooltip = marker.getTooltip && marker.getTooltip();
+      if (!tooltip) return;
+      const el = tooltip.getElement && tooltip.getElement();
+      if (!el || el._dreamTooltipClick) return;
+      el._dreamTooltipClick = true;
+      el.classList.add("name-label--clickable");
+      el.addEventListener("click", function (ev) {
+        if (global.L && global.L.DomEvent) {
+          global.L.DomEvent.stop(ev);
+        }
+        marker.openPopup();
+      });
+    }
+    marker.on("add", attach);
+    if (marker._map) attach();
+  };
+
   TDM.pulseMarkerBounce = function (marker) {
     try {
       const el = marker.getElement();
@@ -57,12 +76,17 @@
     TDM.markersByPinId[Number(pin.id)] = marker;
 
     const labelClass = map._tdmDark ? "name-label name-label--dark" : "name-label";
+    const isInteractiveMap = !map._tdmEmbed;
     marker.bindTooltip(String(pin.name), {
       permanent: true,
+      interactive: isInteractiveMap,
       className: labelClass,
       direction: "top",
       offset: [0, -10],
     });
+    if (isInteractiveMap) {
+      TDM.wireMarkerTooltipClick(marker);
+    }
 
     marker.bindPopup(
       function () {
@@ -88,6 +112,27 @@
   };
 
   let _spotlightRing = null;
+  let _spotlightZoomOutTimer = null;
+
+  function clearSpotlightZoomOutTimer() {
+    if (_spotlightZoomOutTimer) {
+      global.clearTimeout(_spotlightZoomOutTimer);
+      _spotlightZoomOutTimer = null;
+    }
+  }
+
+  function scheduleSpotlightZoomOut(map) {
+    clearSpotlightZoomOutTimer();
+    const ms = TDM.config.SPOTLIGHT_ZOOM_OUT_MS || 15000;
+    _spotlightZoomOutTimer = global.setTimeout(function () {
+      _spotlightZoomOutTimer = null;
+      try {
+        if (map._tdmEmbed) {
+          map.flyTo([12, 18], 2, { duration: 1.4 });
+        }
+      } catch (e) {}
+    }, ms);
+  }
 
   TDM.highlightPinSpotlight = function (map, pin, options) {
     const opts = options || {};
@@ -106,6 +151,7 @@
       const lng = pin.longitude;
       const z = Math.min((map.getZoom() || 2) + 1, 8);
       map.flyTo([lat, lng], z, { duration: 1.1 });
+      scheduleSpotlightZoomOut(map);
     }
 
     if (marker) TDM.pulseMarkerBounce(marker);
