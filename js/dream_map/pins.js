@@ -3,6 +3,33 @@
 
   const TDM = global.TDM;
   TDM.markersByPinId = TDM.markersByPinId || {};
+  let _markerWrapRaf = null;
+
+  TDM.markerLatLngForPin = function (pin, marker, map) {
+    const centerLng = map && map.getCenter ? map.getCenter().lng : pin.longitude;
+    const jitterLat = (marker && marker._jitterLat) || 0;
+    const jitterLng = (marker && marker._jitterLng) || 0;
+    const lat = pin.latitude + jitterLat;
+    const lng = TDM.wrapPinLng(pin.longitude + jitterLng, centerLng);
+    return [lat, lng];
+  };
+
+  TDM.syncMarkersToMapView = function (map) {
+    if (!map || !TDM.markersByPinId) return;
+    if (_markerWrapRaf) return;
+    _markerWrapRaf = global.requestAnimationFrame(function () {
+      _markerWrapRaf = null;
+      const centerLng = map.getCenter().lng;
+      Object.keys(TDM.markersByPinId).forEach(function (key) {
+        const marker = TDM.markersByPinId[key];
+        const pin = marker && marker._dreamPin;
+        if (!pin) return;
+        const lat = pin.latitude + (marker._jitterLat || 0);
+        const lng = TDM.wrapPinLng(pin.longitude + (marker._jitterLng || 0), centerLng);
+        marker.setLatLng([lat, lng]);
+      });
+    });
+  };
 
   TDM.divIconForPin = function (pin) {
     const cheers = TDM.cheerCount(pin) > 0;
@@ -68,11 +95,16 @@
     pin.share_names = pin.share_names || [];
 
     const marker = global.L.marker(
-      [pin.latitude + jitterLat, pin.longitude + jitterLng],
+      [
+        pin.latitude + jitterLat,
+        TDM.wrapPinLng(pin.longitude + jitterLng, map.getCenter().lng),
+      ],
       { icon: TDM.divIconForPin(pin) }
     ).addTo(map);
 
     marker._dreamPin = pin;
+    marker._jitterLat = jitterLat;
+    marker._jitterLng = jitterLng;
     TDM.markersByPinId[Number(pin.id)] = marker;
 
     const labelClass = map._tdmDark ? "name-label name-label--dark" : "name-label";
@@ -95,6 +127,7 @@
       { maxWidth: 280, minWidth: 232, className: "dream-popup-wrap" }
     );
 
+    TDM.syncMarkersToMapView(map);
     return marker;
   };
 
@@ -107,6 +140,7 @@
     list.forEach(function (p) {
       TDM.renderPin(p, map);
     });
+    TDM.syncMarkersToMapView(map);
     if (typeof onCount === "function") onCount(list.length, agg.total);
     return list;
   };
@@ -148,7 +182,10 @@
 
     if (!reduceMotion && !opts.skipFly) {
       const lat = pin.latitude;
-      const lng = pin.longitude;
+      const lng = TDM.wrapPinLng(
+        pin.longitude + (marker && marker._jitterLng ? marker._jitterLng : 0),
+        map.getCenter().lng
+      );
       const z = Math.min((map.getZoom() || 2) + 1, 8);
       map.flyTo([lat, lng], z, { duration: 1.1 });
       scheduleSpotlightZoomOut(map);
@@ -157,7 +194,11 @@
     if (marker) TDM.pulseMarkerBounce(marker);
 
     if (!reduceMotion) {
-      _spotlightRing = global.L.circleMarker([pin.latitude, pin.longitude], {
+      const ringLng = TDM.wrapPinLng(
+        pin.longitude + (marker && marker._jitterLng ? marker._jitterLng : 0),
+        map.getCenter().lng
+      );
+      _spotlightRing = global.L.circleMarker([pin.latitude, ringLng], {
         radius: 22,
         color: "#f0a825",
         fillColor: "#f0a825",

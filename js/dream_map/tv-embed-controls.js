@@ -23,13 +23,12 @@
     logoBtn.setAttribute("aria-expanded", "false");
     logoBtn.setAttribute("aria-controls", "embed-map-speed-panel");
 
-    const img = document.createElement("img");
-    img.src = logoUrl;
-    img.alt = "Trek Relief";
-    img.className = "embed-map-brand-logo";
-    img.width = 120;
-    img.height = 48;
-    logoBtn.appendChild(img);
+    const logo = document.createElement("img");
+    logo.src = logoUrl;
+    logo.alt = "Trek Relief";
+    logo.className = "embed-map-brand-logo";
+    logo.decoding = "async";
+    logoBtn.appendChild(logo);
 
     const panel = document.createElement("div");
     panel.id = "embed-map-speed-panel";
@@ -51,11 +50,11 @@
     slider.className = "embed-map-speed-range";
     slider.min = String(min);
     slider.max = String(max);
-    slider.step = "1";
-    slider.value = String(Math.round(TDM.getMapPanSpeed()));
+    slider.step = "0.5";
+    slider.value = String(TDM.getMapPanSpeed());
 
     function syncValueLabel() {
-      valueEl.textContent = slider.value + " px/s";
+      valueEl.textContent = Number(slider.value).toFixed(1) + " px/s";
     }
 
     syncValueLabel();

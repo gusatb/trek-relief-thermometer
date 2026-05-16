@@ -23,6 +23,11 @@
     --offwhite: #c8c4b8;
     --muted:    #7a7568;
     --dimmer:   #484540;
+    --thermo-a: #4a6b2a;
+    --thermo-b: #5e8835;
+    --thermo-c: #7db048;
+    --thermo-d: #a8d470;
+    --thermo-glow: 122, 176, 72;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -44,11 +49,8 @@
   /* HEADER */
   .header { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding-bottom: 1.5vh; border-bottom: 1px solid var(--border); }
   .logo-area { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
-  .logo-mark { height: 46px; display: flex; align-items: center; flex-shrink: 0; }
+  .logo-mark { height: clamp(56px, 7.5vh, 80px); display: flex; align-items: center; flex-shrink: 0; }
   .logo-mark img { height: 100%; width: auto; object-fit: contain; display: block; }
-  .logo-initials { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 18px; color: var(--green-lt); letter-spacing: 0.05em; }
-  .logo-text { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(13px,1.3vw,19px); font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase; color: var(--white); line-height: 1; }
-  .logo-sub { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(9px,0.8vw,11px); font-weight: 400; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
   .header-center { text-align: center; flex: 1; }
   .eyebrow { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(9px,0.75vw,11px); font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: var(--amber); margin-bottom: 3px; }
   .main-title { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(1.8rem,4.2vw,5rem); font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; line-height: 0.92; color: var(--white); }
@@ -61,7 +63,61 @@
   .status-line.error { color: #e05040; }
 
   /* CONTENT */
-  .content { display: grid; grid-template-columns: 1.4fr auto 1fr; gap: 3vw; align-items: stretch; min-height: 0; }
+  .content {
+    display: grid;
+    grid-template-columns: 1.4fr minmax(210px, auto) 1fr;
+    gap: 3vw;
+    align-items: stretch;
+    justify-items: center;
+    min-height: 0;
+  }
+  .content > .left-embedded-map,
+  .content > .right-col {
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  /* Center column: goal label + thermometer */
+  .thermo-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    min-height: 0;
+    width: 100%;
+    max-width: 220px;
+  }
+  .thermo-goal-head {
+    flex-shrink: 0;
+    width: 100%;
+    text-align: center;
+    padding: 0 4px 10px;
+    margin-left: clamp(16px, 2.5vw, 36px);
+    box-sizing: border-box;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transform: translateY(6px);
+    transition: opacity 0.7s ease, max-height 0.7s ease, transform 0.7s ease;
+    pointer-events: none;
+  }
+  .thermo-column.is-goal .thermo-goal-head {
+    opacity: 1;
+    max-height: 56px;
+    transform: translateY(0);
+  }
+  .thermo-goal-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(1.15rem, 2.4vw, 1.75rem);
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amber-gl);
+    line-height: 1.1;
+    text-shadow: 0 0 28px rgba(240, 168, 37, 0.45);
+    white-space: nowrap;
+  }
 
   /* LEFT: embedded Dream Map (view-only — /map/embed) */
   .left-embedded-map {
@@ -89,16 +145,103 @@
     pointer-events: none;
   }
 
-  /* THERMOMETER */
-  .thermo-wrap { display: flex; align-items: flex-end; height: 100%; min-height: 0; }
-  .thermo-col { position: relative; width: 80px; flex-shrink: 0; height: 100%; min-height: 280px; max-height: 68vh; }
+  /* THERMOMETER — fill color shifts toward gold as progress increases (see applyThermoHeat) */
+  .thermo-wrap {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    position: relative;
+  }
+  .thermo-celebrate {
+    position: absolute;
+    left: 40px;
+    bottom: 0;
+    margin-left: clamp(16px, 2.5vw, 36px);
+    transform: translateX(-50%);
+    width: 160px;
+    height: 100%;
+    max-height: 68vh;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 2s ease;
+    overflow: hidden;
+  }
+  .thermo-wrap.is-goal .thermo-celebrate { opacity: 1; }
+  .thermo-celebrate-halo {
+    position: absolute;
+    inset: 5% 0 8%;
+    background:
+      radial-gradient(ellipse 75% 50% at 50% 72%, rgba(240, 168, 37, 0.2), transparent 68%),
+      radial-gradient(ellipse 55% 35% at 50% 88%, rgba(168, 212, 112, 0.12), transparent 70%);
+    animation: thermo-halo-breathe 11s ease-in-out infinite;
+  }
+  @keyframes thermo-halo-breathe {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 0.85; transform: scale(1.05); }
+  }
+  .thermo-spark {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: rgba(255, 224, 138, 0.55);
+    box-shadow: 0 0 10px rgba(240, 168, 37, 0.35);
+    animation: thermo-spark-drift var(--spark-dur, 16s) ease-in-out infinite var(--spark-delay, 0s);
+  }
+  @keyframes thermo-spark-drift {
+    0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.25; }
+    50% { transform: translate(var(--spark-x, 8px), var(--spark-y, -24px)) scale(1.2); opacity: 0.65; }
+  }
+  .thermo-col {
+    position: relative;
+    z-index: 1;
+    width: 80px;
+    flex-shrink: 0;
+    height: 100%;
+    min-height: 280px;
+    max-height: 68vh;
+    margin-left: clamp(16px, 2.5vw, 36px);
+  }
   .tube-bg { position: absolute; left: 50%; transform: translateX(-50%); width: 44px; top: 0; bottom: 76px; border-radius: 22px 22px 0 0; background: var(--surface2); border: 1.5px solid var(--border2); overflow: hidden; }
-  .tube-fill { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, var(--green) 0%, var(--green-md) 45%, var(--green-lt) 80%, var(--green-gl) 100%); transition: height 2s cubic-bezier(0.34,1.1,0.64,1); }
+  .tube-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, var(--thermo-a) 0%, var(--thermo-b) 45%, var(--thermo-c) 80%, var(--thermo-d) 100%);
+    transition: height 2s cubic-bezier(0.34, 1.1, 0.64, 1), background 2.5s ease, filter 2.5s ease;
+  }
   .tube-fill::after { content: ''; position: absolute; top: 0; left: 7px; width: 6px; bottom: 0; background: rgba(255,255,255,0.11); border-radius: 3px; }
-  .tube-glow { position: absolute; left: 50%; transform: translateX(-50%); width: 64px; height: 22px; background: radial-gradient(ellipse, rgba(122,176,72,0.5) 0%, transparent 70%); transition: bottom 2s cubic-bezier(0.34,1.1,0.64,1); pointer-events: none; }
+  .tube-glow {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 64px;
+    height: 22px;
+    background: radial-gradient(ellipse, rgba(var(--thermo-glow), 0.5) 0%, transparent 70%);
+    transition: bottom 2s cubic-bezier(0.34, 1.1, 0.64, 1), background 2.5s ease;
+    pointer-events: none;
+  }
   .bulb-wrap { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 76px; height: 76px; }
-  .bulb { width: 76px; height: 76px; border-radius: 50%; background: radial-gradient(circle at 38% 35%, var(--green-md), var(--green)); border: 1.5px solid var(--border2); position: relative; box-shadow: inset 0 -6px 16px rgba(0,0,0,0.6), 0 0 28px rgba(74,107,42,0.4); animation: bulb-pulse 3s ease-in-out infinite; }
-  @keyframes bulb-pulse { 0%,100% { box-shadow: inset 0 -6px 16px rgba(0,0,0,0.6), 0 0 28px rgba(74,107,42,0.4); } 50% { box-shadow: inset 0 -6px 16px rgba(0,0,0,0.6), 0 0 48px rgba(122,176,72,0.6); } }
+  .bulb {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 35%, var(--thermo-c), var(--thermo-a));
+    border: 1.5px solid var(--border2);
+    position: relative;
+    box-shadow: inset 0 -6px 16px rgba(0,0,0,0.6), 0 0 28px rgba(var(--thermo-glow), 0.45);
+    animation: bulb-pulse 3s ease-in-out infinite;
+    transition: background 2.5s ease, box-shadow 2.5s ease;
+  }
+  @keyframes bulb-pulse {
+    0%, 100% { box-shadow: inset 0 -6px 16px rgba(0,0,0,0.6), 0 0 28px rgba(var(--thermo-glow), 0.45); }
+    50% { box-shadow: inset 0 -6px 16px rgba(0,0,0,0.6), 0 0 44px rgba(var(--thermo-glow), 0.65); }
+  }
   .bulb-shine { position: absolute; top: 12px; left: 16px; width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.22); }
 
   /* TICKS */
@@ -115,7 +258,9 @@
   .marker { position: absolute; left: -5px; display: flex; align-items: center; gap: 9px; transition: bottom 2s cubic-bezier(0.34,1.1,0.64,1); opacity: 0; z-index: 2; }
   .marker.visible { opacity: 1; }
   .marker-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--amber-lt); border: 2px solid var(--bg); box-shadow: 0 0 0 1.5px var(--amber-lt), 0 0 8px rgba(240,168,37,0.6); flex-shrink: 0; }
-  .marker-label { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(12px,1vw,15px); font-weight: 800; letter-spacing: 0.06em; color: var(--amber-lt); white-space: nowrap; background: var(--surface); padding: 2px 8px; border-radius: 2px; border: 1px solid rgba(200,130,10,0.4); text-transform: uppercase; }
+  .marker-label { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(12px,1vw,15px); font-weight: 800; letter-spacing: 0.06em; color: var(--amber-lt); white-space: nowrap; background: var(--surface); padding: 2px 8px; border-radius: 2px; border: 1px solid rgba(200,130,10,0.4); text-transform: uppercase; transition: color 2s ease, border-color 2s ease, box-shadow 2s ease; }
+  .marker.marker--warm .marker-dot { background: var(--thermo-c); box-shadow: 0 0 0 1.5px var(--thermo-d), 0 0 8px rgba(var(--thermo-glow), 0.55); }
+  .marker.marker--warm .marker-label { color: var(--thermo-d); border-color: rgba(var(--thermo-glow), 0.45); }
 
   /* RIGHT COL */
   .right-col {
@@ -226,7 +371,7 @@
   /* HERO AMOUNT */
   .hero-amount { text-align: center; position: relative; }
   .hero-label { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(10px,0.85vw,12px); font-weight: 600; letter-spacing: 0.32em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
-  .hero-number { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(3.5rem,8.5vw,9.5rem); font-weight: 900; letter-spacing: -0.01em; line-height: 0.88; color: var(--green-gl); text-shadow: 0 0 60px rgba(122,176,72,0.3); transition: text-shadow 0.4s ease; position: relative; display: inline-block; }
+  .hero-number { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(3.5rem,8.5vw,9.5rem); font-weight: 900; letter-spacing: -0.01em; line-height: 0.88; color: var(--green-gl); text-shadow: 0 0 60px rgba(122,176,72,0.3); transition: color 2.5s ease, text-shadow 2.5s ease; position: relative; display: inline-block; }
   .hero-number.flash { animation: hero-flash 1.2s ease-out forwards; }
   @keyframes hero-flash {
     0%   { text-shadow: 0 0 60px rgba(122,176,72,0.3); transform: scale(1); }
@@ -260,7 +405,13 @@
   .progress-labels { display: flex; justify-content: space-between; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(9px,0.82vw,12px); font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
   .progress-labels span:last-child { color: var(--amber); }
   .progress-track { height: 10px; background: var(--surface2); border-radius: 5px; border: 1px solid var(--border2); overflow: hidden; position: relative; }
-  .progress-fill { height: 100%; border-radius: 5px; position: relative; background: linear-gradient(to right, var(--green), var(--green-lt) 70%, var(--green-gl)); transition: width 2s cubic-bezier(0.34,1.1,0.64,1); }
+  .progress-fill {
+    height: 100%;
+    border-radius: 5px;
+    position: relative;
+    background: linear-gradient(to right, var(--thermo-a), var(--thermo-c) 70%, var(--thermo-d));
+    transition: width 2s cubic-bezier(0.34, 1.1, 0.64, 1), background 2.5s ease;
+  }
   .progress-fill::after { content: ''; position: absolute; top: 1px; left: 0; right: 4px; height: 3px; background: rgba(255,255,255,0.18); border-radius: 3px; }
   .progress-fill.shimmer::before {
     content: '';
@@ -478,139 +629,24 @@
   .confetti-p { position: absolute; top: -20px; border-radius: 1px; animation: fall linear forwards; }
   @keyframes fall { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
 
-  /* GOAL REACHED PERSISTENT BANNER */
-  .goal-banner {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
-    transform: translateY(-100%);
-    transition: transform 0.8s cubic-bezier(0.34,1.3,0.64,1);
-    pointer-events: none;
-  }
-  .goal-banner.show { transform: translateY(0); }
-  .goal-banner-inner {
-    background: linear-gradient(135deg, #c8820a, #f0a825, #ffe08a, #f0a825, #c8820a);
-    background-size: 300% 100%;
-    animation: banner-shimmer 3s linear infinite;
-    padding: 12px 2rem;
-    text-align: center;
-    box-shadow: 0 4px 40px rgba(240,168,37,0.6);
-  }
-  @keyframes banner-shimmer { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
-  .goal-banner-text {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: clamp(1.2rem, 2.5vw, 2rem); font-weight: 900;
-    letter-spacing: 0.25em; text-transform: uppercase;
-    color: #0a0c09; line-height: 1;
-  }
-  .goal-banner-sub {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: clamp(0.75rem, 1.2vw, 1rem); font-weight: 600;
-    letter-spacing: 0.18em; text-transform: uppercase;
-    color: rgba(10,12,9,0.7); margin-top: 2px;
-  }
-
-  /* EPIC OVERLAY */
-  .epic-overlay {
-    position: fixed; inset: 0; z-index: 150;
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(5,8,4,0.88);
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.6s;
-  }
-  .epic-overlay.show { opacity: 1; pointer-events: none; }
-
-  /* SUNRAYS */
-  .epic-rays {
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    pointer-events: none;
-  }
-  .epic-ray {
-    position: absolute;
-    width: 2px; height: 55vh;
-    background: linear-gradient(to top, transparent, rgba(240,168,37,0.25), transparent);
-    transform-origin: bottom center;
-    top: 50%; left: 50%;
-    margin-left: -1px;
-    animation: ray-spin 12s linear infinite;
-  }
-  @keyframes ray-spin { from { transform: rotate(var(--start)); } to { transform: rotate(calc(var(--start) + 360deg)); } }
-
-  .epic-card {
-    position: relative; z-index: 2;
-    text-align: center;
-    padding: 4rem 6rem;
-    background: radial-gradient(ellipse at center, rgba(25,35,15,0.95), rgba(10,12,9,0.98));
-    border: 1px solid var(--amber);
-    border-radius: 6px;
-    box-shadow:
-      0 0 0 1px rgba(240,168,37,0.2),
-      0 0 80px rgba(240,168,37,0.35),
-      0 0 200px rgba(240,168,37,0.15);
-    animation: epic-card-breathe 2.5s ease-in-out infinite;
-  }
-  @keyframes epic-card-breathe {
-    0%,100% { box-shadow: 0 0 0 1px rgba(240,168,37,0.2), 0 0 80px rgba(240,168,37,0.35), 0 0 200px rgba(240,168,37,0.15); }
-    50%      { box-shadow: 0 0 0 1px rgba(240,168,37,0.4), 0 0 120px rgba(240,168,37,0.55), 0 0 300px rgba(240,168,37,0.25); }
-  }
-
-  .epic-emoji {
-    font-size: clamp(3rem, 6vw, 5.5rem); line-height: 1;
-    margin-bottom: 0.5rem;
-    animation: epic-emoji-bounce 1s ease-in-out infinite alternate;
-  }
-  @keyframes epic-emoji-bounce { from { transform: scale(1); } to { transform: scale(1.15); } }
-
-  .epic-title {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: clamp(4rem, 10vw, 11rem); font-weight: 900;
-    line-height: 0.85; letter-spacing: 0.04em; text-transform: uppercase;
-    color: var(--amber-gl);
-    text-shadow: 0 0 60px rgba(255,224,138,0.7), 0 0 120px rgba(240,168,37,0.4);
-    animation: epic-title-pulse 1.8s ease-in-out infinite;
-  }
-  @keyframes epic-title-pulse {
-    0%,100% { text-shadow: 0 0 60px rgba(255,224,138,0.7), 0 0 120px rgba(240,168,37,0.4); }
-    50%      { text-shadow: 0 0 100px rgba(255,224,138,1),   0 0 200px rgba(240,168,37,0.7); }
-  }
-
-  .epic-amount {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: clamp(2rem, 5vw, 6rem); font-weight: 900;
-    color: var(--green-gl); letter-spacing: 0.06em; margin-top: 0.5rem;
-    text-shadow: 0 0 40px rgba(168,212,112,0.8);
-  }
-
-  .epic-msg {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: clamp(1rem, 2vw, 2rem); font-weight: 700;
-    letter-spacing: 0.2em; text-transform: uppercase;
-    color: var(--white); margin-top: 1.2rem;
-  }
-
-  .epic-sub {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: clamp(0.8rem, 1.2vw, 1.1rem); font-weight: 400;
-    letter-spacing: 0.15em; text-transform: uppercase;
-    color: var(--muted); margin-top: 0.4rem;
-  }
-
-  /* GOAL-REACHED page-wide gold tint on thermometer */
+  /* Goal reached: gentle shimmer (heat colors already at gold via applyThermoHeat) */
   .tube-fill.goal-reached {
-    background: linear-gradient(to top, #c8820a 0%, #f0a825 50%, #ffe08a 85%, #fff8cc 100%) !important;
-    animation: tube-gold-pulse 2s ease-in-out infinite;
+    animation: tube-goal-shimmer 9s ease-in-out infinite;
   }
-  @keyframes tube-gold-pulse {
-    0%,100% { filter: brightness(1); }
-    50%      { filter: brightness(1.3) drop-shadow(0 0 12px rgba(255,224,138,0.8)); }
+  @keyframes tube-goal-shimmer {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.08); }
   }
 
   .bulb.goal-reached {
-    background: radial-gradient(circle at 38% 35%, #f0a825, #c8820a) !important;
-    animation: bulb-gold-pulse 2s ease-in-out infinite !important;
+    animation: bulb-pulse 4s ease-in-out infinite;
   }
-  @keyframes bulb-gold-pulse {
-    0%,100% { box-shadow: inset 0 -6px 16px rgba(0,0,0,0.6), 0 0 40px rgba(240,168,37,0.6); }
-    50%      { box-shadow: inset 0 -6px 16px rgba(0,0,0,0.6), 0 0 80px rgba(255,224,138,0.9); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .thermo-celebrate-halo,
+    .thermo-spark,
+    .tube-fill.goal-reached { animation: none !important; }
+    .thermo-wrap.is-goal .thermo-celebrate { opacity: 0.7; }
   }
 
   .dollar-particle {
@@ -653,26 +689,6 @@
 <div class="ripple-overlay" id="ripple-overlay"></div>
 <div class="confetti-wrap" id="confetti-wrap"></div>
 
-<!-- GOAL REACHED PERSISTENT BANNER -->
-<div class="goal-banner" id="goal-banner">
-  <div class="goal-banner-inner">
-    <div class="goal-banner-text">🏔 GOAL REACHED 🏔</div>
-    <div class="goal-banner-sub"><span id="goal-banner-raised">$10,000</span> Raised · Thank You Trek Relief Family!</div>
-  </div>
-</div>
-
-<!-- EPIC GOAL CELEBRATION OVERLAY -->
-<div class="epic-overlay" id="epic-overlay">
-  <div class="epic-rays" id="epic-rays"></div>
-  <div class="epic-card">
-    <div class="epic-emoji">🎉</div>
-    <div class="epic-title">GOAL<br>ACHIEVED!</div>
-    <div class="epic-amount" id="epic-amount">$10,000</div>
-    <div class="epic-msg">10 Years · 10x Impact · Thank You!</div>
-    <div class="epic-sub">Trek Relief Family, you did it!</div>
-  </div>
-</div>
-
 <!-- MILESTONE OVERLAY -->
 <div class="milestone-overlay" id="milestone-overlay">
   <div class="milestone-card">
@@ -704,11 +720,7 @@
   <header class="header">
     <div class="logo-area">
       <div class="logo-mark">
-        <img src="/trek_relief_logo.svg" alt="Trek Relief" />
-      </div>
-      <div>
-        <div class="logo-text">Trek Relief</div>
-        <div class="logo-sub">501(c)(3) Nonprofit</div>
+        <img src="/images/trek_relief_logo_white.png" alt="Trek Relief" />
       </div>
     </div>
 
@@ -731,7 +743,14 @@
       <iframe id="dream-map-embed" src="/map/embed" title="Dream With Purpose map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
     </div>
 
-    <div class="thermo-wrap">
+    <div class="thermo-column" id="thermo-column">
+      <div class="thermo-goal-head" id="thermo-goal-head" aria-hidden="true">
+        <div class="thermo-goal-text">Goal Reached!</div>
+      </div>
+      <div class="thermo-wrap" id="thermo-wrap">
+      <div class="thermo-celebrate" id="thermo-celebrate" aria-hidden="true">
+        <div class="thermo-celebrate-halo"></div>
+      </div>
       <div class="thermo-col" id="thermo-col">
         <div class="tube-bg">
           <div class="tube-fill" id="tube-fill" style="height:0%"></div>
@@ -745,6 +764,7 @@
           <div class="marker-label" id="marker-label">$0</div>
         </div>
       </div>
+    </div>
     </div>
 
     <div class="right-col">
@@ -1093,6 +1113,90 @@ function fireIncreaseAnimations(oldVal, newVal) {
   spawnConfetti(28);
 }
 
+const THERMO_GREEN = { a: '#4a6b2a', b: '#5e8835', c: '#7db048', d: '#a8d470', glow: '122, 176, 72' };
+const THERMO_GOLD  = { a: '#7a5218', b: '#c8820a', c: '#f0a825', d: '#ffe08a', glow: '240, 168, 37' };
+let thermoSparksBuilt = false;
+
+function lerpHex(c1, c2, t) {
+  const p = (h) => {
+    const x = h.replace('#', '');
+    return [parseInt(x.slice(0, 2), 16), parseInt(x.slice(2, 4), 16), parseInt(x.slice(4, 6), 16)];
+  };
+  const a = p(c1), b = p(c2);
+  const r = Math.round(a[0] + (b[0] - a[0]) * t);
+  const g = Math.round(a[1] + (b[1] - a[1]) * t);
+  const bl = Math.round(a[2] + (b[2] - a[2]) * t);
+  return '#' + [r, g, bl].map((n) => n.toString(16).padStart(2, '0')).join('');
+}
+
+function lerpRgbStr(s1, s2, t) {
+  const a = s1.split(',').map((x) => Number(x.trim()));
+  const b = s2.split(',').map((x) => Number(x.trim()));
+  return a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(', ');
+}
+
+function applyThermoHeat(pctFill) {
+  const t = Math.min(1, Math.max(0, pctFill));
+  const heat = t < 0.3 ? (t / 0.3) * 0.25 : 0.25 + ((t - 0.3) / 0.7) * 0.75;
+  const root = document.documentElement;
+  root.style.setProperty('--thermo-a', lerpHex(THERMO_GREEN.a, THERMO_GOLD.a, heat));
+  root.style.setProperty('--thermo-b', lerpHex(THERMO_GREEN.b, THERMO_GOLD.b, heat));
+  root.style.setProperty('--thermo-c', lerpHex(THERMO_GREEN.c, THERMO_GOLD.c, heat));
+  root.style.setProperty('--thermo-d', lerpHex(THERMO_GREEN.d, THERMO_GOLD.d, heat));
+  root.style.setProperty('--thermo-glow', lerpRgbStr(THERMO_GREEN.glow, THERMO_GOLD.glow, heat));
+
+  const hero = document.getElementById('hero-number');
+  if (hero) {
+    const glow = 0.3 + heat * 0.5;
+    hero.style.color = lerpHex('#a8d470', '#ffe08a', heat);
+    hero.style.textShadow =
+      '0 0 ' + Math.round(40 + heat * 50) + 'px rgba(' + lerpRgbStr(THERMO_GREEN.glow, THERMO_GOLD.glow, heat) + ',' + glow + ')';
+  }
+
+  const marker = document.getElementById('marker');
+  if (marker) marker.classList.toggle('marker--warm', heat > 0.55);
+}
+
+function ensureThermoSparks() {
+  if (thermoSparksBuilt) return;
+  const host = document.getElementById('thermo-celebrate');
+  if (!host) return;
+  const positions = [
+    { left: '18%', bottom: '22%', x: '6px', y: '-18px', dur: '14s', delay: '0s' },
+    { left: '72%', bottom: '28%', x: '-8px', y: '-22px', dur: '17s', delay: '2s' },
+    { left: '42%', bottom: '48%', x: '4px', y: '-14px', dur: '13s', delay: '4s' },
+    { left: '58%', bottom: '62%', x: '-5px', y: '-20px', dur: '19s', delay: '1s' },
+    { left: '30%', bottom: '70%', x: '7px', y: '-16px', dur: '15s', delay: '3s' },
+    { left: '65%', bottom: '78%', x: '-6px', y: '-12px', dur: '18s', delay: '5s' },
+  ];
+  positions.forEach(function (pos) {
+    const s = document.createElement('div');
+    s.className = 'thermo-spark';
+    s.style.left = pos.left;
+    s.style.bottom = pos.bottom;
+    s.style.setProperty('--spark-x', pos.x);
+    s.style.setProperty('--spark-y', pos.y);
+    s.style.setProperty('--spark-dur', pos.dur);
+    s.style.setProperty('--spark-delay', pos.delay);
+    host.appendChild(s);
+  });
+  thermoSparksBuilt = true;
+}
+
+function setThermoGoalCelebration(active) {
+  const column = document.getElementById('thermo-column');
+  const wrap = document.getElementById('thermo-wrap');
+  const head = document.getElementById('thermo-goal-head');
+  const tube = document.getElementById('tube-fill');
+  const bulb = document.querySelector('.bulb');
+  if (column) column.classList.toggle('is-goal', active);
+  if (wrap) wrap.classList.toggle('is-goal', active);
+  if (head) head.setAttribute('aria-hidden', active ? 'false' : 'true');
+  if (tube) tube.classList.toggle('goal-reached', active);
+  if (bulb) bulb.classList.toggle('goal-reached', active);
+  if (active) ensureThermoSparks();
+}
+
 /* ── CONFETTI ── */
 function spawnConfetti(n, parentEl) {
   const wrap = parentEl || document.getElementById('confetti-wrap');
@@ -1114,6 +1218,9 @@ function updateDisplay(raised) {
   const pctInt  = Math.round(pct * 100);
   const pctFill = Math.min(pct, 1);
   const goalHit = raised >= GOAL;
+
+  applyThermoHeat(pctFill);
+  setThermoGoalCelebration(goalHit);
 
   document.getElementById('tube-fill').style.height = (pctFill * 100) + '%';
   const glowBot = 76 + pctFill * tubePx - 11;
@@ -1162,85 +1269,23 @@ function updateDisplay(raised) {
     }
   });
 
-  if (goalHit) {
-    const bannerRaised = document.getElementById('goal-banner-raised');
-    if (bannerRaised) bannerRaised.textContent = '$' + raised.toLocaleString();
-  }
-
   lastRaised = raised;
 }
 
 /* ── MILESTONE ── */
 function showMilestone(pct, raisedAmt) {
-  if (pct === 100) { fireEpicGoal(raisedAmt); return; }
+  if (pct === 100) {
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      spawnConfetti(36);
+    }
+    return;
+  }
   const ov = document.getElementById('milestone-overlay');
   document.getElementById('milestone-pct').textContent = pct + '%';
   document.getElementById('milestone-msg').textContent = MILESTONE_MSGS[pct] || 'Amazing!';
   ov.classList.add('show');
   spawnConfetti(80);
   setTimeout(() => ov.classList.remove('show'), 3800);
-}
-
-/* ── EPIC GOAL CELEBRATION ── */
-let epicConfettiLoop = null;
-let epicRippleLoop   = null;
-let epicLoopTimer    = null;
-
-function buildEpicRays() {
-  const wrap = document.getElementById('epic-rays');
-  wrap.innerHTML = '';
-  for (let i = 0; i < 24; i++) {
-    const ray = document.createElement('div');
-    ray.className = 'epic-ray';
-    ray.style.cssText = `--start:${(360/24)*i}deg; height:${50+Math.random()*20}vh; opacity:${0.4+Math.random()*0.6}`;
-    wrap.appendChild(ray);
-  }
-}
-
-function showEpicOverlay(raisedAmt) {
-  buildEpicRays();
-  const epic = document.getElementById('epic-overlay');
-  document.getElementById('epic-amount').textContent = '$' + raisedAmt.toLocaleString();
-  epic.classList.add('show');
-  return epic;
-}
-
-function fireEpicGoal(raisedAmt) {
-  document.querySelector('.tube-fill').classList.add('goal-reached');
-  document.querySelector('.bulb').classList.add('goal-reached');
-
-  const bannerRaised = document.getElementById('goal-banner-raised');
-  if (bannerRaised) bannerRaised.textContent = '$' + raisedAmt.toLocaleString();
-  document.getElementById('goal-banner').classList.add('show');
-
-  const epic = showEpicOverlay(raisedAmt);
-  spawnConfetti(250);
-
-  let rippleCount = 0;
-  clearInterval(epicRippleLoop);
-  epicRippleLoop = setInterval(() => {
-    const ripple = document.getElementById('ripple-overlay');
-    ripple.classList.remove('fire');
-    void ripple.offsetWidth;
-    ripple.classList.add('fire');
-    if (++rippleCount > 6) clearInterval(epicRippleLoop);
-  }, 800);
-
-  clearInterval(epicConfettiLoop);
-  epicConfettiLoop = setInterval(() => spawnConfetti(60), 3000);
-
-  for (let i = 0; i < 20; i++) setTimeout(() => spawnDollarParticle(), i * 180);
-
-  setTimeout(() => {
-    epic.classList.remove('show');
-    clearInterval(epicLoopTimer);
-    epicLoopTimer = setInterval(() => {
-      showEpicOverlay(lastRaised);
-      spawnConfetti(120);
-      for (let i = 0; i < 10; i++) setTimeout(() => spawnDollarParticle(), i * 150);
-      setTimeout(() => epic.classList.remove('show'), 6000);
-    }, 45000);
-  }, 8000);
 }
 
 function spawnDollarParticle() {

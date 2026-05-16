@@ -65,6 +65,16 @@
     return Number(pin && pin.share_count) || 0;
   };
 
+  /** Place lng on the world copy nearest map center (repeating tile maps). */
+  global.TDM.wrapPinLng = function (lng, centerLng) {
+    let l = Number(lng);
+    const c = Number(centerLng);
+    if (!Number.isFinite(l) || !Number.isFinite(c)) return l;
+    while (l - c > 180) l -= 360;
+    while (l - c < -180) l += 360;
+    return l;
+  };
+
   global.TDM.scheduleMapResize = function (map, resizeRootEl) {
     function tick() {
       try {

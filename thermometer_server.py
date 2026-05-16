@@ -194,7 +194,7 @@ def _norm_http_path(path: str) -> str:
     return p or "/"
 
 
-_STATIC_PREFIXES = ("/js/", "/css/", "/vendor/")
+_STATIC_PREFIXES = ("/js/", "/css/", "/vendor/", "/images/")
 _MIME_BY_EXT = {
     ".css": "text/css; charset=utf-8",
     ".js": "application/javascript; charset=utf-8",

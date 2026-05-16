@@ -18,10 +18,11 @@
   };
 
   TDM.setMapPanSpeed = function (pxPerSecond) {
-    const min = cfg.MAP_PAN_SPEED_MIN || 5;
-    const max = cfg.MAP_PAN_SPEED_MAX || 80;
+    const min = cfg.MAP_PAN_SPEED_MIN || 1;
+    const max = cfg.MAP_PAN_SPEED_MAX || 60;
     const n = Number(pxPerSecond);
-    _mapPanPxPerSecond = Math.max(min, Math.min(max, Number.isFinite(n) ? n : min));
+    const clamped = Math.max(min, Math.min(max, Number.isFinite(n) ? n : min));
+    _mapPanPxPerSecond = Math.round(clamped * 10) / 10;
     try {
       global.localStorage.setItem(
         cfg.MAP_PAN_SPEED_STORAGE_KEY,
@@ -31,21 +32,14 @@
     return _mapPanPxPerSecond;
   };
 
-  function refreshEmbedMarkers(map) {
-    map.eachLayer(function (layer) {
-      if (layer instanceof global.L.Marker) {
-        const ll = layer.getLatLng();
-        layer.setLatLng(ll);
-      }
-    });
-  }
-
   function startThermometerEmbedEastwardPan(map) {
     if (global.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     let last = performance.now();
     let running = false;
     let tick = 0;
+    /** Leaflet panBy uses integer pixels — accumulate fractional motion for smooth low speeds. */
+    let panCarry = 0;
 
     function step(now) {
       const dt = Math.min(0.22, (now - last) / 1000);
@@ -53,10 +47,14 @@
       try {
         const el = map.getContainer();
         if (!el || !el.isConnected) return;
-        const dx = TDM.getMapPanSpeed() * dt;
-        if (dx > 0) map.panBy([dx, 0], { animate: false });
+        panCarry += TDM.getMapPanSpeed() * dt;
+        const dx = Math.floor(panCarry);
+        if (dx > 0) {
+          map.panBy([dx, 0], { animate: false });
+          panCarry -= dx;
+        }
         tick += 1;
-        if (tick % 8 === 0) refreshEmbedMarkers(map);
+        if (tick % 8 === 0) TDM.syncMarkersToMapView(map);
       } catch (e) {
         return;
       }
@@ -95,7 +93,7 @@
       zoomControl: false,
       minZoom: embed ? 2 : 3,
       maxZoom: 12,
-      worldCopyJump: embed ? false : true,
+      worldCopyJump: true,
       fadeAnimation: embed ? false : true,
       zoomAnimation: embed ? false : true,
     }).setView(embed ? [12, 18] : [15, 10], embed ? 2 : 3);
@@ -109,6 +107,10 @@
         : TDM.config.TILES.light;
     global.L.tileLayer(tiles.base).addTo(map);
     global.L.tileLayer(tiles.labels, { pane: "markerPane" }).addTo(map);
+
+    map.on("move zoom", function () {
+      TDM.syncMarkersToMapView(map);
+    });
 
     if (embed) startThermometerEmbedEastwardPan(map);
 

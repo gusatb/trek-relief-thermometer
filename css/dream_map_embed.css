@@ -96,6 +96,8 @@ body {
   width: auto;
   max-width: min(160px, 42vw);
   object-fit: contain;
+  pointer-events: none;
+  background: transparent;
 }
 
 .embed-map-speed-panel {
