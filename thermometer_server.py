@@ -1,6 +1,6 @@
 """
 Serves thermometer.html over HTTP and donor updates over WebSocket on the SAME port
-(so a browser can use http://<droplet>/ and ws://<droplet>/ with no reverse proxy).
+(so a browser can use http://<droplet>/thermometer and ws://<droplet>/ with no reverse proxy).
 
 Droplet (port 80):   sudo python3 thermometer_server.py
 Local dev:           python3 thermometer_server.py --port 8765
@@ -24,15 +24,23 @@ POLL_FREQ_S = 15
 
 _WEB_DIR = Path(__file__).resolve().parent
 _THERMOMETER_HTML = _WEB_DIR / "thermometer.html"
+_DREAM_MAP_HTML = _WEB_DIR / "dream_map.html"
+_DREAM_MAP_EMBED_HTML = _WEB_DIR / "dream_map_embed.html"
+_MAP_ADMIN_HTML = _WEB_DIR / "map_admin.html"
+_SHARED_MAP_JS = _WEB_DIR / "js" / "dream_map_shared.js"
 
 
-def _load_thermometer_bytes():
-    if not _THERMOMETER_HTML.is_file():
-        raise FileNotFoundError(f"Missing {_THERMOMETER_HTML}")
-    return _THERMOMETER_HTML.read_bytes()
+def _require_bytes(path: Path) -> bytes:
+    if not path.is_file():
+        raise FileNotFoundError(f"Missing {path}")
+    return path.read_bytes()
 
 
-THERMOMETER_BYTES = _load_thermometer_bytes()
+THERMOMETER_BYTES = _require_bytes(_THERMOMETER_HTML)
+DREAM_MAP_BYTES = _require_bytes(_DREAM_MAP_HTML)
+DREAM_MAP_EMBED_BYTES = _require_bytes(_DREAM_MAP_EMBED_HTML)
+MAP_ADMIN_BYTES = _require_bytes(_MAP_ADMIN_HTML)
+SHARED_MAP_JS_BYTES = _require_bytes(_SHARED_MAP_JS)
 
 _ZEFFY_KEY_FILE = _WEB_DIR / "zeffy_api_key.txt"
 
@@ -87,11 +95,33 @@ def req(conn, limit=None, before_id=None):
     return response.status, data
 
 
+def _snapshot_copy(donors):
+    """Shallow copy of donor dicts for safe reuse across polls / clients."""
+    out = []
+    for d in donors:
+        out.append(
+            {
+                "name": d.get("name", ""),
+                "amount": int(d["amount"]),
+                "currency": d.get("currency", "usd"),
+            }
+        )
+    return out
+
+
 def get_all_donors():
+    """Return (donors, clean_exit).
+
+    clean_exit is True only when pagination finished without HTTP errors or
+    exceptions (including an empty first page — a valid \"zero donors\" state).
+    On connection resets / partial reads, clean_exit is False and donors may be
+    incomplete or empty; callers must not treat that as authoritative.
+    """
     conn = create_conn()
     donors = []
     finished = False
     last_id = None
+    clean_exit = False
 
     try:
         while not finished:
@@ -117,6 +147,7 @@ def get_all_donors():
 
             if not len(data.get("data", [])):
                 finished = True
+                clean_exit = True
                 break
 
             last_id = data["data"][-1]["id"]
@@ -126,10 +157,13 @@ def get_all_donors():
     finally:
         conn.close()
 
-    return donors
+    return donors, clean_exit
 
 
 clients = set()
+# Last list from a *clean* Zeffy poll only — used when a poll fails or a new WS
+# client connects during an error so we never broadcast or send empty by mistake.
+_last_donor_snapshot = []
 
 
 async def handler(websocket):
@@ -137,7 +171,14 @@ async def handler(websocket):
     print("Adding new client")
     clients.add(websocket)
     try:
-        donors = await asyncio.to_thread(get_all_donors)
+        try:
+            donors, clean = await asyncio.to_thread(get_all_donors)
+        except Exception as e:
+            print(f"Error web socket initial fetch: {e}")
+            donors, clean = [], False
+        if not clean and _last_donor_snapshot:
+            donors = _snapshot_copy(_last_donor_snapshot)
+            print("Initial Zeffy fetch incomplete; sending last known donor snapshot")
         await websocket.send(json.dumps({"donors": donors}))
         await websocket.wait_closed()
     except Exception as e:
@@ -146,8 +187,32 @@ async def handler(websocket):
         clients.remove(websocket)
 
 
+def _norm_http_path(path: str) -> str:
+    p = path.split("?")[0]
+    if len(p) > 1 and p.endswith("/"):
+        p = p[:-1]
+    return p or "/"
+
+
+def _http_route(norm_path: str):
+    """Return ('redirect', location) or ('bytes', content_type, data) or None."""
+    if norm_path == "/":
+        return ("redirect", "/thermometer")
+    if norm_path in ("/thermometer", "/thermometer.html"):
+        return ("bytes", "text/html; charset=utf-8", THERMOMETER_BYTES)
+    if norm_path == "/map":
+        return ("bytes", "text/html; charset=utf-8", DREAM_MAP_BYTES)
+    if norm_path == "/map/embed":
+        return ("bytes", "text/html; charset=utf-8", DREAM_MAP_EMBED_BYTES)
+    if norm_path in ("/map_admin", "/map_admin.html"):
+        return ("bytes", "text/html; charset=utf-8", MAP_ADMIN_BYTES)
+    if norm_path == "/js/dream_map_shared.js":
+        return ("bytes", "application/javascript; charset=utf-8", SHARED_MAP_JS_BYTES)
+    return None
+
+
 async def process_request(arg1, arg2=None):
-    """Serve static HTML on GET; return None so WebSocket handshakes proceed.
+    """Serve static HTML/JS on GET; return None so WebSocket handshakes proceed.
 
     websockets < 12: process_request(path: str, request_headers: Headers) -> tuple|None
     websockets >= 12: process_request(connection, request: Request) -> Response|None
@@ -158,15 +223,21 @@ async def process_request(arg1, arg2=None):
         upgrade = (request.headers.get("Upgrade") or "").lower()
         if upgrade == "websocket":
             return None
-        p = request.path.split("?")[0]
-        if p in ("/", "/thermometer.html"):
-            html = THERMOMETER_BYTES.decode("utf-8", errors="replace")
-            response = connection.respond(HTTPStatus.OK, html)
-            response.headers["Content-Type"] = "text/html; charset=utf-8"
+        p = _norm_http_path(request.path)
+        routed = _http_route(p)
+        if routed is None:
+            if p == "/favicon.ico":
+                return connection.respond(HTTPStatus.NO_CONTENT, "")
+            return connection.respond(HTTPStatus.NOT_FOUND, "Not found\n")
+        if routed[0] == "redirect":
+            response = connection.respond(HTTPStatus.FOUND, "")
+            response.headers["Location"] = routed[1]
             return response
-        if p == "/favicon.ico":
-            return connection.respond(HTTPStatus.NO_CONTENT, "")
-        return connection.respond(HTTPStatus.NOT_FOUND, "Not found\n")
+        _, content_type, raw = routed
+        body = raw.decode("utf-8", errors="replace")
+        response = connection.respond(HTTPStatus.OK, body)
+        response.headers["Content-Type"] = content_type
+        return response
 
     # Legacy API (websockets 10.x / dist packages): (path, request_headers)
     path, request_headers = arg1, arg2
@@ -174,30 +245,44 @@ async def process_request(arg1, arg2=None):
     if upgrade == "websocket":
         return None
 
-    p = path.split("?")[0]
-    if p in ("/", "/thermometer.html"):
+    p = _norm_http_path(path)
+    routed = _http_route(p)
+    if routed is None:
+        if p == "/favicon.ico":
+            return (HTTPStatus.NO_CONTENT, [], b"")
         return (
-            HTTPStatus.OK,
-            [("Content-Type", "text/html; charset=utf-8")],
-            THERMOMETER_BYTES,
+            HTTPStatus.NOT_FOUND,
+            [("Content-Type", "text/plain; charset=utf-8")],
+            b"Not found\n",
         )
-    if p == "/favicon.ico":
-        return (HTTPStatus.NO_CONTENT, [], b"")
-    return (
-        HTTPStatus.NOT_FOUND,
-        [("Content-Type", "text/plain; charset=utf-8")],
-        b"Not found\n",
-    )
+    if routed[0] == "redirect":
+        return (
+            HTTPStatus.FOUND,
+            [("Location", routed[1]), ("Content-Length", "0")],
+            b"",
+        )
+    _, content_type, raw = routed
+    return (HTTPStatus.OK, [("Content-Type", content_type)], raw)
 
 
 async def broadcast_loop():
+    global _last_donor_snapshot
     last_total = -1
     last_count = -1
     print("Fetching initial data from Zeffy...")
 
     while True:
         try:
-            donors = await asyncio.to_thread(get_all_donors)
+            donors, clean = await asyncio.to_thread(get_all_donors)
+            if not clean:
+                print(
+                    "Zeffy poll did not complete cleanly (connection error or partial data); "
+                    "skipping broadcast — keeping last known donors and totals."
+                )
+                await asyncio.sleep(POLL_FREQ_S)
+                continue
+
+            _last_donor_snapshot = _snapshot_copy(donors)
             current_total = sum(d["amount"] for d in donors)
             current_count = len(donors)
 
@@ -230,9 +315,13 @@ async def main(host: str, port: int):
     ):
         scheme = "https" if port == 443 else "http"
         ws_scheme = "wss" if port == 443 else "ws"
+        host_hint = host if host != "0.0.0.0" else "<this-host>"
+        port_bit = f":{port}" if port not in (80, 443) else ""
         print(
-            f"Thermometer: {scheme}://{host if host != '0.0.0.0' else '<this-host>'}:{port}/\n"
-            f"WebSocket:   {ws_scheme}://<this-host>:{port}/ (same port)\n"
+            f"Thermometer: {scheme}://{host_hint}{port_bit}/thermometer\n"
+            f"Dream map:   {scheme}://{host_hint}{port_bit}/map\n"
+            f"Map admin:   {scheme}://{host_hint}{port_bit}/map_admin\n"
+            f"WebSocket:   {ws_scheme}://{host_hint}{port_bit}/ (same port)\n"
             f"(Use the droplet's public IP or DNS in the browser.)"
         )
         await broadcast_loop()

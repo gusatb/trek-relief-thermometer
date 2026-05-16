@@ -18,9 +18,9 @@
         }
         #map { height: 100vh; width: 100%; z-index: 1; }
 
-        /* Branding overlay */
+        /* Branding overlay — z-index vs map panes once moved into Leaflet pane (see dream_map_shared.js) */
         .branding-overlay {
-            position: absolute; top: 20px; left: 20px; z-index: 1000;
+            position: absolute; top: 20px; left: 20px; z-index: 1;
             background: #2c3e50; padding: 25px; border-radius: 4px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             max-width: 320px; border-left: 6px solid #27ae60;
@@ -60,7 +60,11 @@
             padding: 8px 15px; border-radius: 4px;
             font-size: 13px; font-weight: 700;
             border: 1px solid #27ae60;
+            display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+            white-space: nowrap;
         }
+        #counter-box .counter-sep { color: rgba(255,255,255,0.45); font-weight: 400; }
+        #counter-box .counter-cheers { color: #f39c12; }
 
         /* Tooltip name styling */
         .name-label {
@@ -90,6 +94,101 @@
             0% { transform: scale(1); opacity: 1; }
             100% { transform: scale(3); opacity: 0; }
         }
+        .pin-pulse--cheers {
+            background-color: #f39c12;
+            box-shadow: 0 0 0 2px rgba(243, 156, 18, 0.35);
+        }
+        .pin-pulse--cheers::after {
+            border-color: #f39c12;
+        }
+        @keyframes dream-marker-pop-anim {
+            0% { transform: scale(1); }
+            35% { transform: scale(1.38); }
+            100% { transform: scale(1); }
+        }
+        .leaflet-marker-icon.dream-marker-pop {
+            animation: dream-marker-pop-anim 0.58s cubic-bezier(0.34, 1.4, 0.64, 1);
+        }
+
+        /* Popups above branding pane (640); default Leaflet popup pane is 700 */
+        .leaflet-container .leaflet-dreamBrandUnderPopup-pane {
+            z-index: 640 !important;
+        }
+        .leaflet-popup.dream-popup-wrap .leaflet-popup-content-wrapper {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.25);
+        }
+        .leaflet-popup.dream-popup-wrap .leaflet-popup-content {
+            margin: 12px 14px;
+            line-height: 1.45;
+        }
+        .dream-pin-popup-main strong { font-size: 15px; color: #2c3e50; }
+        .dream-pin-popup-loc { margin: 8px 0 0; font-size: 13px; color: #566573; }
+        .dream-pin-popup-loc span { color: #1e8449; font-weight: 700; }
+        .dream-cheer-block {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e0dcd3;
+        }
+        .dream-cheer-heading {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #c87f0a;
+        }
+        .dream-cheer-sub { margin: 4px 0 8px; font-size: 12px; color: #5d6d7e; }
+        .dream-cheer-list {
+            margin: 0 0 10px;
+            padding-left: 18px;
+            max-height: 120px;
+            overflow-y: auto;
+            font-size: 12px;
+            color: #2c3e50;
+        }
+        .dream-cheer-list li { margin: 2px 0; }
+        .dream-cheer-more { list-style: none; margin-left: -18px; font-style: italic; color: #7f8c8d; }
+        .dream-cheer-empty { margin: 0 0 10px; font-size: 12px; color: #95a5a6; font-style: italic; }
+        .dream-share-box {
+            background: #f8f6f1;
+            border-radius: 8px;
+            padding: 10px 10px 12px;
+            border: 1px solid #e8e4dc;
+        }
+        .dream-share-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 6px;
+        }
+        .dream-share-hint { font-weight: 500; color: #95a5a6; }
+        .dream-share-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: stretch; }
+        .dream-share-input {
+            flex: 1 1 120px;
+            min-width: 100px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 13px;
+        }
+        .dream-share-btn {
+            flex: 0 0 auto;
+            padding: 8px 14px;
+            background: linear-gradient(180deg, #f5b041 0%, #e67e22 100%);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 12px;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            box-shadow: 0 2px 0 #a04000;
+            min-width: 0;
+        }
+        .dream-share-btn:hover:not(:disabled) { filter: brightness(1.06); }
+        .dream-share-btn:disabled { opacity: 0.65; cursor: wait; }
     </style>
 </head>
 
@@ -100,6 +199,7 @@
     <img src="https://images.squarespace-cdn.com/content/v1/58881284d1758ecbedcb722a/1542248227104-QCKXT05HG3JTQ8R8TQ51/tr-logo-white.png?format=1500w" class="logo">
     <h2>Dream With Purpose</h2>
     <p>If you could create a Trek Relief program anywhere in the world, where would it be?</p>
+    <p style="margin-top:12px;font-size:12px;color:#bdc3c7;line-height:1.45">Tip: click any pin to see who else shares that dream — and add your name with <strong style="color:#ecf0f1">Same dream ✨</strong>.</p>
 </div>
 
 <!-- Form -->
@@ -355,8 +455,12 @@
     
     </datalist>
 
-    <button id="submitBtn" onclick="submitPin()">Submit</button>
-    <div id="counter-box"><span id="pin-count">0</span> DREAMS</div>
+    <button type="button" id="submitBtn">Submit</button>
+    <div id="counter-box" title="Dream pins and cheers from the community">
+        <span><span id="pin-count">0</span> dreams</span>
+        <span class="counter-sep">·</span>
+        <span class="counter-cheers"><span id="share-count">0</span> cheers</span>
+    </div>
 </div>
 
 <div id="map"></div>
@@ -364,129 +468,11 @@
 <!-- JS Libs -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+<script src="/js/dream_map_shared.js"></script>
 <script>
-/* ---------------------------------------------------
-   SUPABASE
-----------------------------------------------------*/
-const SUPABASE_URL = "https://dxwyqrmorjlmnuuychfn.supabase.co";
-const SUPABASE_KEY = "sb_publishable_8MS3E7SW33zJwTmhXO5YBQ_CTwdxeGC";
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-/* ---------------------------------------------------
-   MAP SETUP
-----------------------------------------------------*/
-const map = L.map("map", {
-    zoomControl: false,
-    minZoom: 3,
-    maxZoom: 12,
-    worldCopyJump: true,
-}).setView([15, 10], 3);
-
-L.control.zoom({ position: "bottomleft" }).addTo(map);
-
-L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png").addTo(map);
-L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png", {
-    pane: "markerPane"
-}).addTo(map);
-
-let pinCount = 0;
-const updateCounter = (n) => document.getElementById("pin-count").innerText = n;
-
-/* ---------------------------------------------------
-   RENDER PIN
-----------------------------------------------------*/
-function renderPin(pin) {
-    const jitterLat = (Math.random() - 0.5) * 0.8;
-    const jitterLng = (Math.random() - 0.5) * 0.8;
-
-    const icon = L.divIcon({
-        className: "custom",
-        html: "<div class='pin-pulse'></div>",
-        iconSize: [14, 14],
-        iconAnchor: [7, 7]
-    });
-
-    const marker = L.marker([pin.latitude + jitterLat, pin.longitude + jitterLng], { icon }).addTo(map);
-
-    marker.bindTooltip(`${pin.name}`, {
-        permanent: true,
-        className: "name-label",
-        direction: "top",
-        offset: [0, -10]
-    });
-
-    marker.bindPopup(`
-        <strong>${pin.name}</strong><br><br>
-        Dreams of:<br>
-        <span style="color:#27ae60;font-weight:bold;">${pin.location_name}</span>
-    `);
-}
-
-/* ---------------------------------------------------
-   SUBMIT PIN
-----------------------------------------------------*/
-async function submitPin() {
-    const name = document.getElementById("userName").value.trim();
-    const loc = document.getElementById("userLocation").value.trim();
-    const btn = document.getElementById("submitBtn");
-
-    if (!name || !loc) return;
-
-    try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(loc)}`);
-        const geo = await res.json();
-        if (!geo.length) return;
-
-        const { lat, lon } = geo[0];
-
-        const { error } = await _supabase.from("map_pins").insert([
-            {
-                name,
-                location_name: loc,
-                latitude: parseFloat(lat),
-                longitude: parseFloat(lon)
-            }
-        ]);
-
-        if (error) throw error;
-
-        document.getElementById("userName").value = "";
-        document.getElementById("userLocation").value = "";
-
-        btn.innerText = "PINNED!";
-        btn.classList.add("success");
-        setTimeout(() => {
-            btn.innerText = "Submit";
-            btn.classList.remove("success");
-        }, 2000);
-
-    } catch (err) {
-        console.error(err);
-    }
-}
-
-/* ---------------------------------------------------
-   LOAD EXISTING PINS
-----------------------------------------------------*/
-async function loadPins() {
-    const { data } = await _supabase.from("map_pins").select("*");
-    if (data) {
-        data.forEach(renderPin);
-        updateCounter(data.length);
-    }
-}
-loadPins();
-
-/* ---------------------------------------------------
-   REALTIME UPDATES
-----------------------------------------------------*/
-_supabase.channel("map_pins_realtime")
-    .on("postgres_changes", { event: "INSERT", table: "map_pins" }, (payload) => {
-        renderPin(payload.new);
-        updateCounter(++pinCount);
-    })
-    .subscribe();
+document.addEventListener("DOMContentLoaded", function () {
+  DreamMap.initFullPage().catch(function (e) { console.error(e); });
+});
 </script>
 
 </body>
