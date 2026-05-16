@@ -11,25 +11,31 @@
     await TDM.loadAllPins(map, function (n, total) {
       pinCount = n;
       cheerTotal = total;
-      const el = document.getElementById("pin-count");
-      if (el) el.textContent = String(pinCount);
-      const elCh = document.getElementById("share-count");
-      if (elCh) el.textContent = String(cheerTotal);
+      TDM.syncMapStatsCounters();
     });
 
     TDM.subscribeRealtime(map, {
       onPinInsert: function () {
         pinCount += 1;
-        const el = document.getElementById("pin-count");
-        if (el) el.textContent = String(pinCount);
+        TDM.syncMapStatsCounters();
       },
     });
 
     TDM.subscribeSharesRealtime(map, {
       onShareInsert: function () {
-        /* counter updated in realtime.js */
+        TDM.syncMapStatsCounters();
+      },
+      onShareDelete: function () {
+        TDM.syncMapStatsCounters();
       },
     });
+
+    global.setInterval(function () {
+      TDM.refreshMapStatsFromServer().then(function (stats) {
+        pinCount = stats.pinCount;
+        cheerTotal = stats.cheerTotal;
+      });
+    }, 30000);
 
     TDM.wireMapShareClicks(map);
 

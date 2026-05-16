@@ -41,11 +41,37 @@
     return sb
       .from(cfg.SHARES_TABLE)
       .insert([{ pin_id: pinId, shared_by: sharedBy }])
-      .select("id")
+      .select("id, pin_id, shared_by")
       .then(function (res) {
         if (res.error) throw res.error;
+        if (!res.data || !res.data.length) {
+          throw new Error(
+            "Cheer saved but server did not return a row id. Check Supabase INSERT + SELECT policies."
+          );
+        }
         return res;
       });
+  };
+
+  /** Latest Anonymous cheer for this pin (fallback when insert id was not stored). */
+  TDM.findLatestAnonymousShareId = async function (pinId) {
+    const sb = TDM.getSupabase();
+    const { data, error } = await sb
+      .from(cfg.SHARES_TABLE)
+      .select("id, shared_by, created_at")
+      .eq("pin_id", pinId)
+      .order("id", { ascending: false })
+      .limit(5);
+    if (error) {
+      console.warn("findLatestAnonymousShareId:", error.message);
+      return null;
+    }
+    const rows = data || [];
+    for (let i = 0; i < rows.length; i++) {
+      const nm = String(rows[i].shared_by || "").trim();
+      if (nm === "Anonymous" || nm === "") return Number(rows[i].id);
+    }
+    return rows.length ? Number(rows[0].id) : null;
   };
 
   TDM.refreshPinsCheerState = function (pins, map) {
@@ -122,9 +148,51 @@
       .from(cfg.SHARES_TABLE)
       .update({ shared_by: name })
       .eq("id", shareId)
+      .select("id, pin_id, shared_by")
       .then(function (res) {
         if (res.error) throw res.error;
+        if (!res.data || !res.data.length) {
+          return Promise.reject(
+            new Error(
+              "Name not saved — missing UPDATE permission on map_pin_shares in Supabase."
+            )
+          );
+        }
         return res;
       });
+  };
+
+  /** Top-right counters on /map from live marker state. */
+  TDM.syncMapStatsCounters = function () {
+    const pinEl = document.getElementById("pin-count");
+    const cheerEl = document.getElementById("share-count");
+    if (!pinEl && !cheerEl) return;
+
+    let pins = 0;
+    let cheers = 0;
+    const byId = TDM.markersByPinId || {};
+    Object.keys(byId).forEach(function (key) {
+      const m = byId[key];
+      if (m && m._dreamPin) {
+        pins += 1;
+        cheers += TDM.cheerCount(m._dreamPin);
+      }
+    });
+    if (pinEl) pinEl.textContent = String(pins);
+    if (cheerEl) cheerEl.textContent = String(cheers);
+  };
+
+  /** Reload counters from Supabase (authoritative). */
+  TDM.refreshMapStatsFromServer = async function () {
+    const sb = TDM.getSupabase();
+    const [{ count: pinCount, error: pinErr }, agg] = await Promise.all([
+      sb.from("map_pins").select("*", { count: "exact", head: true }),
+      TDM.loadSharesAgg(),
+    ]);
+    const pinEl = document.getElementById("pin-count");
+    const cheerEl = document.getElementById("share-count");
+    if (!pinErr && pinEl) pinEl.textContent = String(pinCount || 0);
+    if (cheerEl) cheerEl.textContent = String(agg.total || 0);
+    return { pinCount: pinCount || 0, cheerTotal: agg.total || 0 };
   };
 })(typeof window !== "undefined" ? window : this);

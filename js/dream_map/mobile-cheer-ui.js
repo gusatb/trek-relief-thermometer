@@ -244,13 +244,40 @@
       showSuccessPopup(marker, pin, { showNameForm: false });
     }
 
-    if (!shareId) {
-      if (submitBtn) submitBtn.disabled = false;
+    function runUpdate(id) {
+      TDM.updateDreamShareName(id, name)
+        .then(function (res) {
+          const row = res.data && res.data[0];
+          if (row && marker._dreamPin) {
+            replaceLastAnonymousName(marker._dreamPin, row.shared_by || name);
+          }
+          finishHideForm();
+          TDM.syncMapStatsCounters();
+        })
+        .catch(function (err) {
+          console.error(err);
+          if (submitBtn) submitBtn.disabled = false;
+          const detail =
+            err && (err.message || err.error_description || (err.error && err.error.message));
+          alert("Could not save your name — try again." + (detail ? "\n\n(" + detail + ")" : ""));
+        });
+    }
+
+    if (shareId) {
+      runUpdate(shareId);
       return;
     }
 
-    TDM.updateDreamShareName(shareId, name)
-      .then(finishHideForm)
+    TDM.findLatestAnonymousShareId(pinId)
+      .then(function (resolvedId) {
+        if (!resolvedId) {
+          if (submitBtn) submitBtn.disabled = false;
+          alert("Could not find your cheer to name. Try cheering again.");
+          return;
+        }
+        marker._lastCheerShareId = resolvedId;
+        runUpdate(resolvedId);
+      })
       .catch(function (err) {
         console.error(err);
         if (submitBtn) submitBtn.disabled = false;
@@ -287,9 +314,6 @@
       triggerCheerBurst(btn);
       applyOptimisticCheer(marker);
 
-      const sc = document.getElementById("share-count");
-      if (sc) sc.textContent = String(Number(sc.textContent || 0) + 1);
-
       TDM.submitDreamShare(pinId, ANON_CHEER_NAME)
         .then(function (res) {
           const row = res.data && res.data[0];
@@ -299,7 +323,10 @@
               enableNameSubmitInPopup(marker);
             }
             TDM.markShareEchoDedupShareId(row.id);
+          } else {
+            console.warn("Cheer insert returned no id — name submit will use fallback lookup");
           }
+          TDM.syncMapStatsCounters();
           if (typeof cb.onCheerSuccess === "function") {
             cb.onCheerSuccess({
               pinId: pinId,
@@ -311,7 +338,7 @@
         .catch(function (err) {
           console.error(err);
           revertCheer(marker, prevCount);
-          if (sc) sc.textContent = String(Math.max(0, Number(sc.textContent || 0) - 1));
+          TDM.syncMapStatsCounters();
           const detail =
             err && (err.message || err.error_description || (err.error && err.error.message));
           alert(

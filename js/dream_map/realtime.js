@@ -4,12 +4,6 @@
   const TDM = global.TDM;
   const cfg = TDM.config;
 
-  function bumpGlobalCheerCount(delta) {
-    const cheerEl = document.getElementById("share-count");
-    if (!cheerEl) return;
-    cheerEl.textContent = String(Math.max(0, Number(cheerEl.textContent || 0) + delta));
-  }
-
   function applyShareInsert(row) {
     const shareId = Number(row.id);
     const pid = Number(row.pin_id);
@@ -27,7 +21,7 @@
       TDM.refreshOpenPinPopup(marker);
     }
 
-    bumpGlobalCheerCount(1);
+    TDM.syncMapStatsCounters();
     return { pinId: pid, sharedBy: nm, pin: marker && marker._dreamPin };
   }
 
@@ -51,6 +45,7 @@
     if (!replaced) names.push(newName);
 
     TDM.refreshOpenPinPopup(marker);
+    TDM.syncMapStatsCounters();
     return { pinId: pid, sharedBy: newName, pin: marker._dreamPin };
   }
 
@@ -70,7 +65,7 @@
     marker._dreamPin.share_count = Math.max(0, TDM.cheerCount(marker._dreamPin) - 1);
     TDM.refreshMarkerIcon(marker);
     TDM.refreshOpenPinPopup(marker);
-    bumpGlobalCheerCount(-1);
+    TDM.syncMapStatsCounters();
     return { pinId: pid, sharedBy: nm, pin: marker._dreamPin };
   }
 
@@ -86,6 +81,7 @@
           row.share_count = 0;
           row.share_names = [];
           TDM.renderPin(row, map);
+          TDM.syncMapStatsCounters();
           if (typeof h.onPinInsert === "function") h.onPinInsert(row);
         }
       )

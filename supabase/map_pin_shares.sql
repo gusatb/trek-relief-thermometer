@@ -34,6 +34,7 @@ create policy "map_pin_shares_insert_public"
   to anon, authenticated
   with check (true);
 
+-- REQUIRED for saving cheer names after anonymous cheer (map + admin edit):
 drop policy if exists "map_pin_shares_update_public" on public.map_pin_shares;
 create policy "map_pin_shares_update_public"
   on public.map_pin_shares for update

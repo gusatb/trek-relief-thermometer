@@ -60,6 +60,21 @@
             background: #2ecc71;
         }
 
+        .cheer-name-input {
+            width: 100%;
+            min-width: 120px;
+            margin: 0;
+            padding: 4px 8px;
+            font-size: 14px;
+        }
+
+        .cheer-name-hint {
+            font-size: 11px;
+            color: #7f8c8d;
+            display: block;
+            margin-top: 2px;
+        }
+
         h2.section-title {
             text-align: center;
             color: #2c3e50;
@@ -148,6 +163,33 @@
             }
 
             await loadAll();
+        }
+
+        async function updateCheerName(id, name) {
+            const trimmed = String(name || "").trim();
+            if (!trimmed) {
+                alert("Name cannot be empty.");
+                return;
+            }
+
+            const { data, error } = await supabaseClient
+                .from("map_pin_shares")
+                .update({ shared_by: trimmed })
+                .eq("id", id)
+                .select("id, shared_by");
+
+            if (error) {
+                alert("Update failed: " + error.message);
+                return;
+            }
+            if (!data || !data.length) {
+                alert(
+                    "Update failed — no row updated. Run the UPDATE policy in map_pin_shares.sql in Supabase."
+                );
+                return;
+            }
+
+            await loadShares();
         }
 
         async function deletePin(id) {
@@ -278,25 +320,50 @@
                 const pin = share.map_pins || pinById[share.pin_id];
                 const dreamName = pin ? pin.name : "(deleted dream)";
                 const dreamLoc = pin ? pin.location_name : "—";
-                const cheeredBy = share.shared_by || "Anonymous";
+                const cheeredBy = String(share.shared_by || "").trim() || "Anonymous";
+                const isAnon = cheeredBy === "Anonymous";
 
                 const row = document.createElement("tr");
-                row.innerHTML =
-                    "<td>" +
-                    escapeHtml(dreamName) +
-                    "</td><td>" +
-                    escapeHtml(dreamLoc) +
-                    "</td><td>" +
-                    escapeHtml(cheeredBy) +
-                    "</td><td>" +
-                    escapeHtml(new Date(share.created_at).toLocaleString()) +
-                    "</td><td><button class=\"btn-delete\" data-cheer-id=\"" +
-                    share.id +
-                    "\">Delete</button></td>";
 
-                row.querySelector(".btn-delete").addEventListener("click", function () {
+                const tdDream = document.createElement("td");
+                tdDream.textContent = dreamName;
+                row.appendChild(tdDream);
+
+                const tdLoc = document.createElement("td");
+                tdLoc.textContent = dreamLoc;
+                row.appendChild(tdLoc);
+
+                const tdCheer = document.createElement("td");
+                const input = document.createElement("input");
+                input.type = "text";
+                input.className = "cheer-name-input";
+                input.value = cheeredBy;
+                input.maxLength = 80;
+                input.addEventListener("change", function () {
+                    updateCheerName(share.id, input.value);
+                });
+                tdCheer.appendChild(input);
+                if (isAnon) {
+                    const hint = document.createElement("span");
+                    hint.className = "cheer-name-hint";
+                    hint.textContent = "Unnamed — edit to set name";
+                    tdCheer.appendChild(hint);
+                }
+                row.appendChild(tdCheer);
+
+                const tdTime = document.createElement("td");
+                tdTime.textContent = new Date(share.created_at).toLocaleString();
+                row.appendChild(tdTime);
+
+                const tdDelete = document.createElement("td");
+                const delBtn = document.createElement("button");
+                delBtn.className = "btn-delete";
+                delBtn.textContent = "Delete";
+                delBtn.addEventListener("click", function () {
                     deleteCheer(share.id);
                 });
+                tdDelete.appendChild(delBtn);
+                row.appendChild(tdDelete);
 
                 table.appendChild(row);
             });
